@@ -5,40 +5,142 @@ import org.jspace.*;
 import java.io.IOException;
 import java.util.Scanner;
 
+
 public class Client {
     public static void main(String[] args) throws IOException, InterruptedException {
-
+        // creating spaces
         Scanner input = new Scanner(System.in);
-        RemoteSpace chat = new RemoteSpace("tcp://localhost:9001/chat?keep");
+        String ip = "10.209.95.117";
+        RemoteSpace chat = new RemoteSpace("tcp://"+ip+":9001/chat?keep");
+        RemoteSpace spectators = new RemoteSpace("tcp://"+ip+":9001/spectators?keep");
+        RemoteSpace playing = new RemoteSpace("tcp://"+ip+":9001/playing?keep");
 
+        // gets username and put client in different spaces
         System.out.print("Please enter your username: ");
-        String user_name = input.nextLine();
-        chat.put(user_name);
+        String username = input.nextLine();
+        chat.put(username);
+        spectators.put("Joined", username);
+        spectators.put("Ready", username);
 
-        new Thread(new MyScreen(chat, user_name)).start();
+        //starting threads and add listener to spectators
+        new Thread(new ChatListener(chat, username)).start();
+        SpectatorsListener listener = new SpectatorsListener(spectators, username);
+        new Thread(listener).start();
+        new Thread(new GameListener(playing, spectators, username)).start();
 
         System.out.println("Say something...");
+
+        // Client game logic
         while(true) {
             String message = input.nextLine();
-            chat.put(user_name, message);
+            if (message.startsWith("say: ")) {
+            	chat.put(username, message.substring(5));
+            } else if (message.startsWith("play: ") && listener.isInGame()) {
+            	playing.put(username, new RPS(message.split(" ")[1]));
+            	//TODO spawn new playing thread
+
+            }
         }
     }
 }
 
-class MyScreen implements Runnable{
+//RPS game loop, sending and receiving info from the game space
+class GameListener implements Runnable{
 
-    Space chat;
-    String user_name;
+	private int[] points;
+    Space playing, spectators;
+    String username;
 
-    public MyScreen(RemoteSpace chat, String user_name) {
-        this.chat = chat;
-        this.user_name = user_name;
+    public GameListener(RemoteSpace playing, RemoteSpace spectators, String username) {
+        this.playing = playing;
+        this.spectators = spectators;
+        this.username = username;
     }
 
     public void run() {
         while(true) {
             try{
-                Object[] output = chat.get(new ActualField("output"), new ActualField(user_name), new FormalField(String.class));
+                //If start of game
+                String opponent = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
+                points = new int[]{0, 0};
+                System.out.println("Playing against " + opponent);
+                //If in game
+				while (true) {
+					String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
+                	if (winner.equals("draw")) {
+                       System.out.println("It is a draw");
+                    } else {
+                       System.out.println(winner + " won this round!");
+	                	if (winner.equals(username)) {
+	                        points[0]++;
+	                    } else {
+	                        points[1]++;
+	                    }
+	                    //If game is over
+	                    if (points[0] == 2 || points[1] == 2) {
+	                        if (points[0] == 2) {
+	                            System.out.println("We won!");
+	                        } else {
+	                            System.out.println("We lost...");
+								//TODO set inGame to false in SpectatorsListener
+				        		spectators.put("Joined", username);
+				        		spectators.put("Ready", username);
+	                        }
+	                        break;
+	                    }
+                    }
+                }
+            } catch (InterruptedException e) {}
+        }
+    }
+
+}
+
+//Listen to spectators space for info that we are moved into a game
+class SpectatorsListener implements Runnable{
+
+	private boolean inGame = false;
+    Space spectators;
+    String username;
+
+    public SpectatorsListener(RemoteSpace spectators, String username) {
+        this.spectators = spectators;
+        this.username = username;
+    }
+
+    public void run() {
+        while(true) {
+            try{
+                Object[] output = spectators.get(new ActualField(username));
+				inGame = true;
+            } catch (InterruptedException e) {}
+        }
+    }
+
+    public void leaveGame() {
+        inGame = false;
+    }
+
+	public boolean isInGame() {
+        return inGame;
+    }
+}
+
+//Listen to chat space for messages from other users
+class ChatListener implements Runnable{
+
+    Space chat;
+    String username;
+
+    public ChatListener(RemoteSpace chat, String username) {
+        this.chat = chat;
+        this.username = username;
+    }
+
+    public void run() {
+        while(true) {
+            try{
+                Object[] output = chat.get(new ActualField("output"), new ActualField(username), new FormalField(String.class));
                 System.out.println((String)output[2]);
             } catch (InterruptedException e) {}
         }
