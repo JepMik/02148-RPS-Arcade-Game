@@ -31,7 +31,7 @@ public class Client {
         new Thread(new Pong(ping, username)).start();
         SpectatorsListener listener = new SpectatorsListener(spectators, username);
         new Thread(listener).start();
-        new Thread(new GameListener(playing, spectators, username)).start();
+        new Thread(new GameListener(playing, spectators, username, listener)).start();
 
         System.out.println("Say something...");
 
@@ -55,11 +55,13 @@ class GameListener implements Runnable{
     private int[] points;
     Space playing, spectators;
     String username;
+    SpectatorsListener listener;
 
-    public GameListener(RemoteSpace playing, RemoteSpace spectators, String username) {
+    public GameListener(RemoteSpace playing, RemoteSpace spectators, String username, SpectatorsListener listener) {
         this.playing = playing;
         this.spectators = spectators;
         this.username = username;
+        this.listener = listener;
     }
 
     public void run() {
@@ -68,13 +70,19 @@ class GameListener implements Runnable{
                 //If start of game
                 String opponent = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
                 points = new int[]{0, 0};
+                if (opponent.equals("Disconnected")) {
+                    System.out.println("Other user disconnected");
+                    listener.leaveGame();
+                    spectators.put("Joined", username);
+                    spectators.put("Ready", username);
+                }
                 System.out.println("Playing against " + opponent);
                 //If in game
                 while (true) {
                     String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
                     if (winner.equals("disconnected")) {
                         System.out.println("Other user disconnected");
-						//TODO set inGame to false in SpectatorsListener
+                        listener.leaveGame();
                         spectators.put("Joined", username);
                         spectators.put("Ready", username);
                         break;
@@ -93,7 +101,7 @@ class GameListener implements Runnable{
                                 System.out.println("We won!");
                             } else {
                                 System.out.println("We lost...");
-                                //TODO set inGame to false in SpectatorsListener
+                        		listener.leaveGame();
                                 spectators.put("Joined", username);
                                 spectators.put("Ready", username);
                             }

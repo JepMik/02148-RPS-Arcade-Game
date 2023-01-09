@@ -79,7 +79,7 @@ class Mover implements Runnable {
                 //Move in to fill space
                 if (game.connectedPlayers() < 2) { // If there is two players in playing space
                     //Move in and
-                    System.out.println("Moved user " + users.get(0) + " from queue to game");
+                    System.out.println("Moved user " + users.get(0) + " from spectators to game");
                     spectators.get(new ActualField("Ready"), new FormalField(String.class));
                     spectators.put(users.get(0));
                     game.addPlayer(users.get(0));
@@ -284,6 +284,8 @@ class Chat implements Runnable {
                 // Send msg from user to all users
                 Object[] t = chat.get(new FormalField(String.class), new FormalField(String.class));
                 String output = ">> " + t[0] + ": " + t[1];
+                Object[] res = infoSpace.query(new ActualField("Users"), new FormalField(Object.class));
+                users = (ArrayList<String>)((ArrayList<String>)res[1]).clone();
                 System.out.println(output);
                 for (String user : users) {
                     chat.put("output", user, output);
