@@ -10,10 +10,14 @@ public class Client {
     public static void main(String[] args) throws IOException, InterruptedException {
         // creating spaces
         Scanner input = new Scanner(System.in);
-        String ip = "10.209.95.117";
-        RemoteSpace chat = new RemoteSpace("tcp://"+ip+":9001/chat?keep");
-        RemoteSpace spectators = new RemoteSpace("tcp://"+ip+":9001/spectators?keep");
-        RemoteSpace playing = new RemoteSpace("tcp://"+ip+":9001/playing?keep");
+
+        System.out.print("Please enter the room's IP address (or localhost to play locally): ");
+        String ip = input.nextLine();
+
+        RemoteSpace chat = new RemoteSpace("tcp://" + ip + ":9001/chat?keep");
+        RemoteSpace ping = new RemoteSpace("tcp://" + ip + ":9001/ping?keep");
+        RemoteSpace spectators = new RemoteSpace("tcp://" + ip + ":9001/spectators?keep");
+        RemoteSpace playing = new RemoteSpace("tcp://" + ip + ":9001/playing?keep");
 
         // gets username and put client in different spaces
         System.out.print("Please enter your username: ");
@@ -24,6 +28,7 @@ public class Client {
 
         //starting threads and add listener to spectators
         new Thread(new ChatListener(chat, username)).start();
+        new Thread(new Pong(ping, username)).start();
         SpectatorsListener listener = new SpectatorsListener(spectators, username);
         new Thread(listener).start();
         new Thread(new GameListener(playing, spectators, username)).start();
@@ -34,10 +39,10 @@ public class Client {
         while(true) {
             String message = input.nextLine();
             if (message.startsWith("say: ")) {
-            	chat.put(username, message.substring(5));
+                chat.put(username, message.substring(5));
             } else if (message.startsWith("play: ") && listener.isInGame()) {
-            	playing.put(username, new RPS(message.split(" ")[1]));
-            	//TODO spawn new playing thread
+                playing.put(username, new RPS(message.split(" ")[1]));
+                //TODO spawn new playing thread
 
             }
         }
@@ -47,7 +52,7 @@ public class Client {
 //RPS game loop, sending and receiving info from the game space
 class GameListener implements Runnable{
 
-	private int[] points;
+    private int[] points;
     Space playing, spectators;
     String username;
 
@@ -65,29 +70,35 @@ class GameListener implements Runnable{
                 points = new int[]{0, 0};
                 System.out.println("Playing against " + opponent);
                 //If in game
-				while (true) {
-					String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
-                	if (winner.equals("draw")) {
-                       System.out.println("It is a draw");
+                while (true) {
+                    String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
+                    if (winner.equals("disconnected")) {
+                        System.out.println("Other user disconnected");
+						//TODO set inGame to false in SpectatorsListener
+                        spectators.put("Joined", username);
+                        spectators.put("Ready", username);
+                        break;
+                    } else if (winner.equals("draw")) {
+                        System.out.println("It is a draw");
                     } else {
-                       System.out.println(winner + " won this round!");
-	                	if (winner.equals(username)) {
-	                        points[0]++;
-	                    } else {
-	                        points[1]++;
-	                    }
-	                    //If game is over
-	                    if (points[0] == 2 || points[1] == 2) {
-	                        if (points[0] == 2) {
-	                            System.out.println("We won!");
-	                        } else {
-	                            System.out.println("We lost...");
-								//TODO set inGame to false in SpectatorsListener
-				        		spectators.put("Joined", username);
-				        		spectators.put("Ready", username);
-	                        }
-	                        break;
-	                    }
+                        System.out.println(winner + " won this round!");
+                        if (winner.equals(username)) {
+                            points[0]++;
+                        } else {
+                            points[1]++;
+                        }
+                        //If game is over
+                        if (points[0] == 2 || points[1] == 2) {
+                            if (points[0] == 2) {
+                                System.out.println("We won!");
+                            } else {
+                                System.out.println("We lost...");
+                                //TODO set inGame to false in SpectatorsListener
+                                spectators.put("Joined", username);
+                                spectators.put("Ready", username);
+                            }
+                            break;
+                        }
                     }
                 }
             } catch (InterruptedException e) {}
@@ -99,7 +110,7 @@ class GameListener implements Runnable{
 //Listen to spectators space for info that we are moved into a game
 class SpectatorsListener implements Runnable{
 
-	private boolean inGame = false;
+    private boolean inGame = false;
     Space spectators;
     String username;
 
@@ -112,7 +123,7 @@ class SpectatorsListener implements Runnable{
         while(true) {
             try{
                 Object[] output = spectators.get(new ActualField(username));
-				inGame = true;
+                inGame = true;
             } catch (InterruptedException e) {}
         }
     }
@@ -121,7 +132,7 @@ class SpectatorsListener implements Runnable{
         inGame = false;
     }
 
-	public boolean isInGame() {
+    public boolean isInGame() {
         return inGame;
     }
 }
@@ -147,3 +158,29 @@ class ChatListener implements Runnable{
     }
 
 }
+
+// Pings the Server to confirm the connection status
+class Pong implements Runnable {
+
+    Space ping;
+    String username;
+
+    public Pong(RemoteSpace ping, String username) {
+        this.ping = ping;
+        this.username = username;
+    }
+
+    public void run(){
+        while(true) {
+            try{
+                ping.get(new ActualField(username), new ActualField("ping"));
+                ping.put(username,"pong");
+            } catch (InterruptedException e) {}
+        }
+    }
+
+}
+
+
+
+
