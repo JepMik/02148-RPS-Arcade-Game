@@ -1,3 +1,10 @@
 /target/
 /.idea/
+<<<<<<< HEAD
 02148-RPS-Arcade-Game.iml
+=======
+/.settings/
+.classpath
+.codetogether.ignore
+.project
+>>>>>>> a59e7af3b00991b9a58dfe1ed36bdd5d6103c3ae
