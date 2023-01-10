@@ -188,11 +188,13 @@ class Game implements Runnable {
                     //Get choice from each player
                     RPS[] choices = new RPS[2];
                     for (int i = 0; i < 2; i++) {
-                        RPS choice = (RPS)playing.get(new ActualField(users.get(i)), new FormalField(RPS.class))[1];
+                        Object[] res = playing.get(new FormalField(String.class), new FormalField(RPS.class));
+                        String name = (String)res[0];
+                        RPS choice = (RPS)res[1];
                         if (choice.getChoice() == Choice.DISCONNECTED) {
                             continue gameLoop;
                         }
-                        choices[i] = choice;
+                        choices[users.indexOf(name)] = choice;
                     }
                     int winner = choices[0].winner(choices[1]);
                     if (winner == 2) {
@@ -231,7 +233,7 @@ class Game implements Runnable {
                 playing.put(name, 							  new RPS(Choice.DISCONNECTED));
 				playing.put(users.get(1-users.indexOf(name)), new RPS(Choice.DISCONNECTED)); // To game
 
-				playing.put(users.get(1-users.indexOf(name)), "disconnected"); // To user who disconnected
+				playing.put(users.get(1-users.indexOf(name)), "disconnected"); // To user who didn't disconnected
 				infoSpace.put("needPlayer");
             }
             infoSpace.put("needPlayer");

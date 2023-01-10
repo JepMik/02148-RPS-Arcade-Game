@@ -73,18 +73,14 @@ class GameListener implements Runnable{
                 if (opponent.equals("Disconnected")) {
                     System.out.println("Other user disconnected");
                     listener.leaveGame();
-                    spectators.put("Joined", username);
-                    spectators.put("Ready", username);
                 }
                 System.out.println("Playing against " + opponent);
                 //If in game
-                while (true) {
+                while (listener.isInGame()) {
                     String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
                     if (winner.equals("disconnected")) {
                         System.out.println("Other user disconnected");
                         listener.leaveGame();
-                        spectators.put("Joined", username);
-                        spectators.put("Ready", username);
                         break;
                     } else if (winner.equals("draw")) {
                         System.out.println("It is a draw");
@@ -102,13 +98,13 @@ class GameListener implements Runnable{
                             } else {
                                 System.out.println("We lost...");
                         		listener.leaveGame();
-                                spectators.put("Joined", username);
-                                spectators.put("Ready", username);
                             }
                             break;
                         }
                     }
                 }
+                spectators.put("Joined", username);
+                spectators.put("Ready", username);
             } catch (InterruptedException e) {}
         }
     }
