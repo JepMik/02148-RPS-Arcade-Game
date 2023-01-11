@@ -1,0 +1,51 @@
+package group2.Server;
+
+import java.util.ArrayList;
+
+import org.jspace.ActualField;
+import org.jspace.FormalField;
+import org.jspace.Space;
+
+// Instantiated once per Client 
+class Ping implements Runnable {
+	Space ping;
+	Space infoSpace;
+	String username;
+	
+	public Ping(Space ping, Space infoSpace, String username) {
+		this.ping = ping;
+		this.infoSpace = infoSpace;
+		this.username = username;
+	}
+	
+	public void run() {
+		try {
+			while(true) {
+				// Sleep to reduce message traffic
+				Thread.sleep(3000);
+				// Exit if client is unresponsive or wants to exit
+				Object[] response = ping.getp(new ActualField(username), new FormalField(String.class));
+				if (response == null) {
+					break;
+				} else if (((String)response[1]).equals("break")) {
+					break;
+				}
+				
+				// Ping client
+				ping.put(username, "ping");
+			}
+			removeClient();
+		} catch (InterruptedException e) {}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void removeClient() throws InterruptedException {
+		System.out.println("Removing " + username + "...");
+		ArrayList<String> users = (ArrayList<String>)infoSpace.get(new ActualField("Users"), new FormalField(Object.class))[1];
+		users.remove(username);
+		infoSpace.put("Users", users);
+		infoSpace.put("Removed", username);
+	}
+}
+
+
