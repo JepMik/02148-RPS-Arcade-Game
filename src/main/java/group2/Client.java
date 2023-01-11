@@ -7,6 +7,7 @@ import java.util.Scanner;
 
 
 public class Client {
+	
     public static void main(String[] args) throws IOException, InterruptedException {
         // creating spaces
         Scanner input = new Scanner(System.in);
@@ -18,6 +19,11 @@ public class Client {
         RemoteSpace ping = new RemoteSpace("tcp://" + ip + ":9001/ping?keep");
         RemoteSpace spectators = new RemoteSpace("tcp://" + ip + ":9001/spectators?keep");
         RemoteSpace playing = new RemoteSpace("tcp://" + ip + ":9001/playing?keep");
+        
+        // Space to keep Pong active
+        Space active = new SequentialSpace(1);
+        active.put("active");
+        
 
         // gets username and put client in different spaces
         System.out.print("Please enter your username: ");
@@ -28,7 +34,7 @@ public class Client {
 
         //starting threads and add listener to spectators
         new Thread(new ChatListener(chat, username)).start();
-        new Thread(new Pong(ping, username)).start();
+        new Thread(new Pong(ping, active, username)).start();
         SpectatorsListener listener = new SpectatorsListener(spectators, username);
         new Thread(listener).start();
         new Thread(new GameListener(playing, spectators, username, listener)).start();
@@ -73,14 +79,18 @@ class GameListener implements Runnable{
                 if (opponent.equals("Disconnected")) {
                     System.out.println("Other user disconnected");
                     listener.leaveGame();
+                    spectators.put("Joined", username);
+                    spectators.put("Ready", username);
                 }
                 System.out.println("Playing against " + opponent);
                 //If in game
-                while (listener.isInGame()) {
+                while (true) {
                     String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
                     if (winner.equals("disconnected")) {
                         System.out.println("Other user disconnected");
                         listener.leaveGame();
+                        spectators.put("Joined", username);
+                        spectators.put("Ready", username);
                         break;
                     } else if (winner.equals("draw")) {
                         System.out.println("It is a draw");
@@ -98,13 +108,13 @@ class GameListener implements Runnable{
                             } else {
                                 System.out.println("We lost...");
                         		listener.leaveGame();
+                                spectators.put("Joined", username);
+                                spectators.put("Ready", username);
                             }
                             break;
                         }
                     }
                 }
-                spectators.put("Joined", username);
-                spectators.put("Ready", username);
             } catch (InterruptedException e) {}
         }
     }
@@ -167,24 +177,30 @@ class ChatListener implements Runnable{
 class Pong implements Runnable {
 
     Space ping;
+    Space active;
     String username;
-
-    public Pong(RemoteSpace ping, String username) {
-        this.ping = ping;
+    
+    
+    public Pong(RemoteSpace ping, Space active, String username) {
+    	this.ping = ping;
+        this.active = active;
         this.username = username;
     }
 
     public void run(){
-        while(true) {
-            try{
-                ping.get(new ActualField(username), new ActualField("ping"));
-                ping.put(username,"pong");
-            } catch (InterruptedException e) {}
-        }
+        try {
+			while(wantToContinue()) {
+				ping.put(username, "continue");
+			    ping.get(new ActualField(username), new ActualField("ping"));
+			    System.out.println(username + " got ping!");
+			}
+			ping.put(username, "break");
+		} catch (InterruptedException e) {}
+    }
+    
+    private boolean wantToContinue() throws InterruptedException {
+    	return (active.queryp(new ActualField("active")) != null);
     }
 
 }
-
-
-
 

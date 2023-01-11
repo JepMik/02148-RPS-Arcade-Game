@@ -36,7 +36,7 @@ public class Server {
         repository.addGate("tcp://" + ip + ":9001/?keep");
         System.out.println("Server is up...");
 
-        new Thread(new Chat(chat, infoSpace)).start();
+        new Thread(new Chat(chat, infoSpace, ping)).start();
 
         ArrayList<String> spectatingUsers = new ArrayList<String>();
 
@@ -45,7 +45,7 @@ public class Server {
         new Thread(new SpectatorUserUpdater(spectators, spectatingUsers)).start();
 
         new Thread(new Mover(infoSpace, spectators, game, spectatingUsers)).start();
-        new Thread(new Ping(ping, infoSpace)).start();
+        //new Thread(new Ping(ping, infoSpace)).start();
 
         while(true) {
             //If user to remove
@@ -170,7 +170,6 @@ class Game implements Runnable {
     public void run() {
         try {
             gameLoop: while (true) {
-                System.out.println("Loop begin");
                 if (connected < 2) {
                     infoSpace.get(new ActualField("gotPlayers"));
                 }
@@ -188,13 +187,11 @@ class Game implements Runnable {
                     //Get choice from each player
                     RPS[] choices = new RPS[2];
                     for (int i = 0; i < 2; i++) {
-                        Object[] res = playing.get(new FormalField(String.class), new FormalField(RPS.class));
-                        String name = (String)res[0];
-                        RPS choice = (RPS)res[1];
+                        RPS choice = (RPS)playing.get(new ActualField(users.get(i)), new FormalField(RPS.class))[1];
                         if (choice.getChoice() == Choice.DISCONNECTED) {
                             continue gameLoop;
                         }
-                        choices[users.indexOf(name)] = choice;
+                        choices[i] = choice;
                     }
                     int winner = choices[0].winner(choices[1]);
                     if (winner == 2) {
@@ -233,7 +230,7 @@ class Game implements Runnable {
                 playing.put(name, 							  new RPS(Choice.DISCONNECTED));
 				playing.put(users.get(1-users.indexOf(name)), new RPS(Choice.DISCONNECTED)); // To game
 
-				playing.put(users.get(1-users.indexOf(name)), "disconnected"); // To user who didn't disconnected
+				playing.put(users.get(1-users.indexOf(name)), "disconnected"); // To user who disconnected
 				infoSpace.put("needPlayer");
             }
             infoSpace.put("needPlayer");
@@ -272,15 +269,17 @@ class SpectatorUserUpdater implements Runnable {
 class Chat implements Runnable {
     Space chat;
     Space infoSpace;
+    Space ping;
 
-    public Chat(Space chat, Space infoSpace) {
+    public Chat(Space chat, Space infoSpace, Space ping) {
         this.chat = chat;
         this.infoSpace = infoSpace;
+        this.ping = ping;
     }
 
     public void run() {
         ArrayList<String> users = new ArrayList<String>();
-        new Thread(new ChatUserUpdater(chat, infoSpace, users)).start();
+        new Thread(new ChatUserUpdater(chat, infoSpace, users, ping)).start();
         while (true) {
             try {
                 // Send msg from user to all users
@@ -294,20 +293,21 @@ class Chat implements Runnable {
                 }
             } catch (InterruptedException e) {}
         }
-
     }
 }
 
 class ChatUserUpdater implements Runnable {
     Space chat;
+    Space ping;
     Space infoSpace;
     ArrayList<String> users;
     boolean hasPut = false;
 
-    public ChatUserUpdater(Space chat, Space infoSpace, ArrayList<String> users) {
+    public ChatUserUpdater(Space chat, Space infoSpace, ArrayList<String> users, Space ping) {
         this.chat = chat;
         this.users = users;
         this.infoSpace = infoSpace;
+        this.ping = ping;
     }
     // Adds client to chat, must have username
     public void run() {
@@ -316,10 +316,13 @@ class ChatUserUpdater implements Runnable {
                 String new_user = (String)chat.get(new FormalField(String.class))[0];
                 System.out.println(new_user + " logged in!");
                 if (hasPut) {
-					Object[] response = infoSpace.get(new ActualField("Users"), new FormalField(Object.class)); //Looking for pong response
+                	Object[] response = infoSpace.get(new ActualField("Users"), new FormalField(Object.class)); //Looking for pong response
                 	users = (ArrayList<String>)((ArrayList<String>)response[1]).clone();
                 }
-                if (!users.contains(new_user)) users.add(new_user);
+                if (!users.contains(new_user)) {
+                	users.add(new_user);
+                	new Thread(new Ping(ping, infoSpace, new_user)).start();
+                }
                 infoSpace.put("Users", users);
                 hasPut = true;
             } catch (InterruptedException e) {}
@@ -327,58 +330,49 @@ class ChatUserUpdater implements Runnable {
     }
 }
 
-// Class Ping
+
+
+// Instantiated once per Client 
 class Ping implements Runnable {
-    Space ping;
-    Space infoSpace;
-    ArrayList<String> users;
-
-    public Ping(Space ping, Space infoSpace) {
-        this.ping = ping;
-        this.infoSpace = infoSpace;
-    }
-
-    public void run() {
-        while(true) {
-            try {
-                // Ping all users
-                // Get all users from infoSpace
-                Object[] res = infoSpace.query(new ActualField("Users"), new FormalField(Object.class));
-                users = (ArrayList<String>)((ArrayList<String>)res[1]).clone();
-                for (String user : users) {
-                    ping.put(user, "ping");
-                }
-                // Sleep to reduce message traffic
-                Thread.sleep(5000);
-                // Get ping responses from all users
-                ArrayList<String> removedUsers = new ArrayList<>();
-                for (int i = 0; i < users.size(); i++) {
-                    Object[] pingResponse = ping.getp(new ActualField(users.get(i)), new ActualField("pong"));
-                    // Remove user if it did not send the ping response
-                    if (pingResponse == null) {
-                        System.out.println(users.get(i) + " was unresponsive. Removed from users list.");
-                        removedUsers.add(users.get(i));
-                        removeUser(users.get(i));
-                        i--;
-                    }
-                }
-                res = infoSpace.get(new ActualField("Users"), new FormalField(Object.class));
-                for (String user : (ArrayList<String>)res[1]) {
-					if (!users.contains(user) && !removedUsers.contains(user)) {
-                        users.add(user);
-                    }
-                }
-                infoSpace.put("Users", users);
-            } catch (InterruptedException e) {}
-        }
-    }
-
-    public void removeUser(String user) throws InterruptedException {
-        users.remove(user);
-        infoSpace.put("Removed", user);
-        // Remove from ping space
-        ping.getp(new ActualField(user), new FormalField(String.class));
-
-    }
+	Space ping;
+	Space infoSpace;
+	String username;
+	
+	public Ping(Space ping, Space infoSpace, String username) {
+		this.ping = ping;
+		this.infoSpace = infoSpace;
+		this.username = username;
+	}
+	
+	public void run() {
+		try {
+			while(true) {
+				// Sleep to reduce message traffic
+				Thread.sleep(3000);
+				// Exit if client is unresponsive or wants to exit
+				Object[] response = ping.getp(new ActualField(username), new FormalField(String.class));
+				if (response == null) {
+					break;
+				} else if (((String)response[1]).equals("break")) {
+					break;
+				}
+				
+				// Ping client
+				ping.put(username, "ping");
+				System.out.println("Pinging " + username + "...");
+			}
+			removeClient();
+		} catch (InterruptedException e) {}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void removeClient() throws InterruptedException {
+		System.out.println("Removing " + username + "...");
+		ArrayList<String> users = (ArrayList<String>)infoSpace.get(new ActualField("Users"), new FormalField(Object.class))[1];
+		users.remove(username);
+		infoSpace.put("Users", users);
+		infoSpace.put("Removed", username);
+	}
 }
+
 
