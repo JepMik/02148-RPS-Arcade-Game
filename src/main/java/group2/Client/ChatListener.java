@@ -4,7 +4,7 @@ import org.jspace.FormalField;
 import org.jspace.Space;
 import org.jspace.RemoteSpace;
 
-//Listen to chat space for messages from other users
+// Print messages from other users
 class ChatListener implements Runnable {
 
     Space chat;
@@ -23,5 +23,4 @@ class ChatListener implements Runnable {
             } catch (InterruptedException e) {}
         }
     }
-
 }

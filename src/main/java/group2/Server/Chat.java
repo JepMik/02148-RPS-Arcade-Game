@@ -18,18 +18,19 @@ public class Chat implements Runnable {
         this.ping = ping;
     }
 
-    public void run() {
-        ArrayList<String> users = new ArrayList<String>();
-        new Thread(new ChatUserUpdater(chat, infoSpace, users, ping)).start();
+    @SuppressWarnings("unchecked")
+	public void run() {
+        ArrayList<String> clients = new ArrayList<String>();
+        new Thread(new ChatUserUpdater(chat, infoSpace, clients, ping)).start();
         while (true) {
             try {
-                // Send msg from user to all users
+                // Send msg from user to all clients
                 Object[] t = chat.get(new FormalField(String.class), new FormalField(String.class));
                 String output = ">> " + t[0] + ": " + t[1];
-                Object[] res = infoSpace.query(new ActualField("Users"), new FormalField(Object.class));
-                users = (ArrayList<String>)((ArrayList<String>)res[1]).clone();
+                Object[] res = infoSpace.query(new ActualField("Clients"), new FormalField(Object.class));
+                clients = (ArrayList<String>)((ArrayList<String>)res[1]).clone();
                 System.out.println(output);
-                for (String user : users) {
+                for (String user : clients) {
                     chat.put("output", user, output);
                 }
             } catch (InterruptedException e) {}
@@ -41,12 +42,12 @@ class ChatUserUpdater implements Runnable {
     Space chat;
     Space ping;
     Space infoSpace;
-    ArrayList<String> users;
+    ArrayList<String> clients;
     boolean hasPut = false;
 
-    public ChatUserUpdater(Space chat, Space infoSpace, ArrayList<String> users, Space ping) {
+    public ChatUserUpdater(Space chat, Space infoSpace, ArrayList<String> clients, Space ping) {
         this.chat = chat;
-        this.users = users;
+        this.clients = clients;
         this.infoSpace = infoSpace;
         this.ping = ping;
     }
@@ -57,14 +58,14 @@ class ChatUserUpdater implements Runnable {
                 String new_user = (String)chat.get(new FormalField(String.class))[0];
                 System.out.println(new_user + " logged in!");
                 if (hasPut) {
-                	Object[] response = infoSpace.get(new ActualField("Users"), new FormalField(Object.class)); //Looking for pong response
-                	users = (ArrayList<String>)((ArrayList<String>)response[1]).clone();
+                	Object[] response = infoSpace.get(new ActualField("Clients"), new FormalField(Object.class)); //Looking for pong response
+                	clients = (ArrayList<String>)((ArrayList<String>)response[1]).clone();
                 }
-                if (!users.contains(new_user)) {
-                	users.add(new_user);
+                if (!clients.contains(new_user)) {
+                	clients.add(new_user);
                 	new Thread(new Ping(ping, infoSpace, new_user)).start();
                 }
-                infoSpace.put("Users", users);
+                infoSpace.put("Clients", clients);
                 hasPut = true;
             } catch (InterruptedException e) {}
         }

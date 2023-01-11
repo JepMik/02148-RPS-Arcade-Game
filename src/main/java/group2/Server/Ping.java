@@ -41,9 +41,9 @@ class Ping implements Runnable {
 	@SuppressWarnings("unchecked")
 	private void removeClient() throws InterruptedException {
 		System.out.println("Removing " + username + "...");
-		ArrayList<String> users = (ArrayList<String>)infoSpace.get(new ActualField("Users"), new FormalField(Object.class))[1];
-		users.remove(username);
-		infoSpace.put("Users", users);
+		ArrayList<String> clients = (ArrayList<String>)infoSpace.get(new ActualField("Clients"), new FormalField(Object.class))[1];
+		clients.remove(username);
+		infoSpace.put("Clients", clients);
 		infoSpace.put("Removed", username);
 	}
 }

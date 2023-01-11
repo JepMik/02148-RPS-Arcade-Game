@@ -10,13 +10,13 @@ class Mover implements Runnable {
     Space InfoSpace;
     Space spectators;
     Game game;
-    ArrayList<String> users;
+    ArrayList<String> clients;
 
-    public Mover(Space InfoSpace, Space spectators, Game game, ArrayList<String> users) {
+    public Mover(Space InfoSpace, Space spectators, Game game, ArrayList<String> clients) {
         this.InfoSpace = InfoSpace;
         this.spectators = spectators;
         this.game = game;
-        this.users = users;
+        this.clients = clients;
     }
 
     public void run() {
@@ -29,11 +29,11 @@ class Mover implements Runnable {
                 //Move in to fill space
                 if (game.connectedPlayers() < 2) { // If there is two players in playing space
                     //Move in and
-                    System.out.println("Moved user " + users.get(0) + " from spectators to game");
+                    System.out.println("Moved user " + clients.get(0) + " from spectators to game");
                     spectators.get(new ActualField("Ready"), new FormalField(String.class));
-                    spectators.put(users.get(0));
-                    game.addPlayer(users.get(0));
-                    users.remove(0);
+                    spectators.put(clients.get(0));
+                    game.addPlayer(clients.get(0));
+                    clients.remove(0);
                 }
             } catch (InterruptedException e) {}
         }

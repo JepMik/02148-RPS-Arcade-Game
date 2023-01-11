@@ -9,11 +9,11 @@ import org.jspace.Space;
 // Class used for handling spectators
 class SpectatorUserUpdater implements Runnable {
     Space spectators;
-    ArrayList<String> users;
+    ArrayList<String> clients;
 
-    public SpectatorUserUpdater(Space spectators, ArrayList<String> users) {
+    public SpectatorUserUpdater(Space spectators, ArrayList<String> clients) {
         this.spectators = spectators;
-        this.users = users;
+        this.clients = clients;
     }
 
     public void run(){
@@ -21,7 +21,7 @@ class SpectatorUserUpdater implements Runnable {
             try {
                 String new_user = (String)spectators.get(new ActualField("Joined"), new FormalField(String.class))[1];
                 System.out.println(new_user + " joined spectators!");
-                if (!users.contains(new_user)) users.add(new_user);
+                if (!clients.contains(new_user)) clients.add(new_user);
             } catch (InterruptedException e) {}
         }
     }
