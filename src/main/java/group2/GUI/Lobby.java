@@ -12,49 +12,46 @@ public class Lobby {
 	
 	JFrame screen;
 	Container con;
-	JLabel InputLabel;
-	JPanel InputPanel;
+	JLabel textLabel;
+	JPanel textPanel;
 
 	
 	Font  f1  = new Font(Font.SERIF, Font.PLAIN,  23);
 	
 	public static void main(String[] args) {
 		new Lobby();
-		
-		
+				
 	}
 	
 	
 	public Lobby() {
 		
-
-
-		
-		
+	
 		screen = new JFrame();
-		screen.setSize(800, 600);	
+		screen.setSize(700, 600);	
 		screen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		screen.getContentPane().setBackground(Color.black);
 		screen.setLayout(null);
 		
 		con = screen.getContentPane(); 
 		
-		InputPanel = new JPanel();
-		InputPanel.setBounds(150,250,500,100);
-		InputPanel.setBackground(Color.black);
-		con.add(InputPanel);
 		
 		
-		InputLabel = new JLabel("Please enter your username: ");
-		InputLabel.setForeground(Color.white);
-		InputLabel.setFont(f1);
-		InputPanel.add(InputLabel);
+		textPanel = new JPanel();
+		textPanel.setBounds(140,240,500,100);
+		textPanel.setBackground(Color.blue);
+		con.add(textPanel);
+		
+		
+		//Only shows the black window with a label for entering the "username"
+		
+		textLabel = new JLabel("Please enter your username: ");
+		textLabel.setForeground(Color.black);
+		textLabel.setFont(f1);
+		textPanel.add(textLabel);
 		screen.setVisible(true);
 		
-
-		
-				
-
+		//TODO: Able to enter the username
 		
 		
 	}
