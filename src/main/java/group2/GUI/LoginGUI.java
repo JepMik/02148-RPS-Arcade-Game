@@ -5,12 +5,7 @@ import org.jspace.FormalField;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.GroupLayout;
-import javax.swing.LayoutStyle;
+import javax.swing.*;
 
 public class LoginGUI extends JFrame implements ActionListener {
 	// Spaces and swing components
@@ -20,40 +15,44 @@ public class LoginGUI extends JFrame implements ActionListener {
 	JButton loginButton;
 	Font  f1  = new Font(Font.SERIF, Font.PLAIN,  24);
 	boolean hasIP = false;
+	Image icon;
 
 	// Constructor for login GUI
 	public LoginGUI(Space GUISpace) {
 		this.GUISpace = GUISpace;
 
+		// Frame init
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(new Color(102, 102, 102));
 		setTitle("Rock Paper Scissors Arcade!");
         setSize(600, 400);
         setResizable(false);
 
+		ImageIcon img = new ImageIcon("resources\rps_logo.jpeg");
+		setIconImage(img.getImage());
 
+		// Labels, Buttons and Text fields
 		JLabel jLabel1 = new JLabel();
-        ipTextField = new JTextField();
+		jLabel1.setFont(f1);
+		jLabel1.setForeground(new Color(255, 0, 255));
+		jLabel1.setText("Rock Paper Scissors Arcade");
+
+		JLabel jLabel2 = new JLabel();
+		jLabel2.setForeground(new Color(255, 0, 255));
+		jLabel2.setText("IP:");
+
+		JLabel jLabel3 = new JLabel();
+		jLabel3.setForeground(new Color(255, 0, 255));
+		jLabel3.setText("Username:");
+
+		ipTextField = new JTextField();
         usernameTextField = new JTextField();
         loginButton = new JButton();
-        JLabel jLabel2 = new JLabel();
-        JLabel jLabel3 = new JLabel();
-
-        jLabel1.setFont(f1);
-        jLabel1.setForeground(new java.awt.Color(255, 0, 255));
-        jLabel1.setText("Rock Paper Scissors Arcade");
-
-
-        loginButton.setText("Login");
+		loginButton.setText("Login");
         loginButton.addActionListener(this);
 
-        jLabel2.setForeground(new Color(255, 0, 255));
-        jLabel2.setText("IP:");
 
-        jLabel3.setForeground(new Color(255, 0, 255));
-        jLabel3.setText("Username:");
-
-        GroupLayout layout = new GroupLayout(getContentPane());
+		GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -95,6 +94,8 @@ public class LoginGUI extends JFrame implements ActionListener {
         );
 
         setVisible(true);
+		pack();
+		setLocationRelativeTo(null);
 
 	}
 
@@ -108,28 +109,34 @@ public class LoginGUI extends JFrame implements ActionListener {
 				String res = (String)GUISpace.get(new ActualField("IP Response"), new FormalField(String.class))[1];
 				if (res.equals("Fail")) {
 					//CREATE DIALOGBOX
-					System.out.println("Ip bad");
+					showErrIp();
 					return;
 				}
 				hasIP = true;
-				System.out.println("Ip good");
+				ipTextField.setEnabled(false);
 			}
-			
+
 			GUISpace.put("Username", usernameInput);
 			String res = (String)GUISpace.get(new ActualField("Name Response"), new FormalField(String.class))[1];
 			if (res.equals("Fail")) {
 				//CREATE DIALOGBOX
-				System.out.println("Name bad");
+				showErrName();
 				return;
 			}
-
-			System.out.println("Name good");
-			//Open next GUI
+			//Close winddow
+			dispose();
 			
 
 		} catch (InterruptedException ie) {}
 	}
-
-
-
+	// Methods for JOptionPane, shows errors
+	private void showErrName(){
+		JOptionPane.showMessageDialog(null,"All names must be different!","Invalid names",JOptionPane.ERROR_MESSAGE);
+	}
+	private void showErrIp(){
+		JOptionPane.showMessageDialog(null,"Ip is not valid","Invalid Ip",JOptionPane.ERROR_MESSAGE);
+	}
 }
+
+
+

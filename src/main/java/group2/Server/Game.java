@@ -61,6 +61,7 @@ class Game implements Runnable {
                         playing.put(clients.get(0), clients.get(winner));
                         playing.put(clients.get(1), clients.get(winner));
                         points[winner]++;
+
                     }
                 }
                 // Update score of winner or create score if none has been made
@@ -85,6 +86,7 @@ class Game implements Runnable {
     // Used for handling removing a player, if player disconnects and game needs restart
     public void removePlayer(String name) throws InterruptedException {
 		if (clients.contains(name)) {
+            //Game ongoing even though both/one of the players is disconnected
             connected = 0;
 			if (clients.size() == 2) {
                 playing.put(name, 							  new RPS(Choice.DISCONNECTED));

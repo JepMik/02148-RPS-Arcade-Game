@@ -2,6 +2,7 @@ package group2.Client;
 
 import org.jspace.*;
 import group2.Common.RPS;
+import group2.GUI.GameGUI;
 import group2.GUI.LoginGUI;
 
 import java.io.IOException;
@@ -25,9 +26,11 @@ public class Client {
 		getVerifyIP(GUISpace);
 		
 		Space active = new SequentialSpace(1);
-		    
+
 		// Get and verify username
 		String username = getVerifyUsername(GUISpace, chat);
+
+        new Thread(new GameGUI(GUISpace, username)).start();
 
         // Add tokens to spaces
 	    active.put("active");
@@ -39,21 +42,21 @@ public class Client {
         new Thread(new Pong(ping, active, username)).start();
         SpectatorsListener listener = new SpectatorsListener(spectators, username);
         new Thread(listener).start();
-        new Thread(new GameListener(playing, spectators, username, listener)).start();
+        new Thread(new GameListener(playing, spectators, GUISpace, username, listener)).start();
 
-        System.out.println("Say something...");
+        System.out.println("Everything is running");
 
         // Client game logic
         while(true) {
-            String message = (String)GUISpace.get(new ActualField("CMD"), new FormalField(String.class))[1];
-            if (message.startsWith("say: ")) {
-                chat.put(username, message.substring(5));
-            } else if (message.startsWith("play: ") && listener.isInGame()) {
-                playing.put(username, new RPS(message.split(" ")[1]));
-            }
+        	Object[] tuple = GUISpace.get(new ActualField("ToClient"), new FormalField(String.class), new FormalField(Object.class));
+        	switch ((String)tuple[1]) {
+        		case "Move":
+        			playing.put(username, new RPS(((String[])tuple[2])[0]));
+        			break;
+        	}
         }
-    }
-    
+     }
+
     private static void getVerifyIP(Space GUISpace) throws InterruptedException {
         while (true) {
             String ip = (String)GUISpace.get(new ActualField("IP"), new FormalField(String.class))[1];
@@ -65,7 +68,6 @@ public class Client {
 			    playing = new RemoteSpace("tcp://" + ip + ":9001/playing?keep");
 			    break;
 			} catch (IOException e) {
-                System.out.println("IP fail");
         		GUISpace.put("IP Response", "Fail");
             }
         }
@@ -85,7 +87,6 @@ public class Client {
 	    	if (res.equals("valid")) {
                 break;
             }
-            System.out.println("Name fail");
             GUISpace.put("Name Response", "Fail");
         }
 		GUISpace.put("Name Response", "Ok");
