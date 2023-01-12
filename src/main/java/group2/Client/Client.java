@@ -2,6 +2,7 @@ package group2.Client;
 
 import org.jspace.*;
 import group2.Common.RPS;
+import group2.GUI.LoginGUI;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -9,30 +10,29 @@ import java.util.Scanner;
 
 public class Client {
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-		// Input scanner
-		Scanner input = new Scanner(System.in);
+	private static RemoteSpace chat;
+	private static RemoteSpace ping;
+	private static RemoteSpace spectators;
+	private static RemoteSpace playing;
+
+    public static void main(String[] args) throws InterruptedException {
+
+        //Open main menu
+        Space GUISpace = new SequentialSpace();
+        LoginGUI loginGui = new LoginGUI(GUISpace);
+
+		// Get and verify IP
+		getVerifyIP(GUISpace);
 		
-		// Get IP to connect to host
-		System.out.print("Please enter the room's IP address (or localhost to play locally): ");
-		String ip = input.nextLine();
-		
-		System.out.print("Please enter your username: ");
-		String username = input.nextLine();
-		
-		// Create spaces
-	    RemoteSpace chat = new RemoteSpace("tcp://" + ip + ":9001/chat?keep");
-	    RemoteSpace ping = new RemoteSpace("tcp://" + ip + ":9001/ping?keep");
-	    RemoteSpace spectators = new RemoteSpace("tcp://" + ip + ":9001/spectators?keep");
-	    RemoteSpace playing = new RemoteSpace("tcp://" + ip + ":9001/playing?keep");
-	    Space active = new SequentialSpace(1);
-	    
-	    // Add tokens to spaces
+		Space active = new SequentialSpace(1);
+		    
+		// Get and verify username
+		String username = getVerifyUsername(GUISpace, chat);
+
+        // Add tokens to spaces
 	    active.put("active");
-	    chat.put(username);
 	    spectators.put("Joined", username);
 		spectators.put("Ready", username);
-		 
 
         // Starting threads and add listener to spectators
         new Thread(new ChatListener(chat, username)).start();
@@ -45,7 +45,7 @@ public class Client {
 
         // Client game logic
         while(true) {
-            String message = input.nextLine();
+            String message = (String)GUISpace.get(new ActualField("CMD"), new FormalField(String.class))[1];
             if (message.startsWith("say: ")) {
                 chat.put(username, message.substring(5));
             } else if (message.startsWith("play: ") && listener.isInGame()) {
@@ -53,4 +53,43 @@ public class Client {
             }
         }
     }
+    
+    private static void getVerifyIP(Space GUISpace) throws InterruptedException {
+        while (true) {
+            String ip = (String)GUISpace.get(new ActualField("IP"), new FormalField(String.class))[1];
+            // Connect to spaces
+			try {
+                chat = new RemoteSpace("tcp://" + ip + ":9001/chat?keep");
+			    ping = new RemoteSpace("tcp://" + ip + ":9001/ping?keep");
+			    spectators = new RemoteSpace("tcp://" + ip + ":9001/spectators?keep");
+			    playing = new RemoteSpace("tcp://" + ip + ":9001/playing?keep");
+			    break;
+			} catch (IOException e) {
+                System.out.println("IP fail");
+        		GUISpace.put("IP Response", "Fail");
+            }
+        }
+        GUISpace.put("IP Response", "Ok");
+    }
+
+    private static String getVerifyUsername(Space GUISpace, Space chat) throws InterruptedException {
+        // Get inputted username and repeat if verification fails
+        String username;
+	    while (true) {
+            username = (String)GUISpace.get(new ActualField("Username"), new FormalField(String.class))[1];
+            // Put username in chat space to be verified
+            System.out.println("Trying to login with " + username);
+	    	chat.put(username, "login", "filler");
+	    	// Try again if the verification fails
+	    	String res = (String)chat.get(new ActualField(username), new ActualField("response"), new FormalField(String.class))[2];
+	    	if (res.equals("valid")) {
+                break;
+            }
+            System.out.println("Name fail");
+            GUISpace.put("Name Response", "Fail");
+        }
+		GUISpace.put("Name Response", "Ok");
+    	return username;
+    }
+
 }

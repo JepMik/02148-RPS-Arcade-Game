@@ -31,9 +31,11 @@ public class Server {
         repository.addGate("tcp://" + ip + ":9001/?keep");
         System.out.println("Server is up...");
 
-        new Thread(new Chat(chat, infoSpace, ping)).start();
-
         ArrayList<String> spectatingUsers = new ArrayList<String>();
+        ArrayList<String> clients = new ArrayList<String>();
+        
+        new Thread(new Chat(chat, infoSpace, clients)).start();
+        new Thread(new ChatUserUpdater(chat, infoSpace, clients, ping)).start();
 
         Game game = new Game(playing, infoSpace);
         new Thread(game).start();
