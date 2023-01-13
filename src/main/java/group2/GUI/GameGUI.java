@@ -165,13 +165,14 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 
 						System.out.println("Points " + points.entrySet());
 
-						scoreboardModel.clear();
+						scoreboardModel.removeAllElements();
 
 						Map<String, Integer> sorted = points.entrySet().stream()
 				                .sorted(Entry.comparingByValue(Comparator.reverseOrder()))
 				                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
 						sorted.forEach((k, v) -> scoreboardModel.addElement(k + ":" + v));
+						scoreboardList.setModel(scoreboardModel);
 
 						System.out.println("Updated scoreboard");
 						break;
@@ -273,6 +274,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         player1Score.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
         player1Score.setText("0");
 		queue.setText("Spectators Queue");
+		scoreboard.setText("Scoreboard");
 
         rock.setText("Rock");
 
