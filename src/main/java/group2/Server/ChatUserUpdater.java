@@ -41,9 +41,11 @@ class ChatUserUpdater implements Runnable {
 
 		        // Send the approved username verification response back to client and add username to clients list
 				System.out.println(username + " logged in!");
-		        chat.put(username, "response", "valid");
 				clients.add(username);
 				infoSpace.put("Clients", clients);
+
+				//Only send valid after user has been added
+		        chat.put(username, "response", "valid");
 
 		    	new Thread(new Ping(ping, infoSpace, username)).start();
                 hasPut = true;

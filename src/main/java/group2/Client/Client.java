@@ -15,6 +15,7 @@ public class Client {
 	private static RemoteSpace ping;
 	private static RemoteSpace spectators;
 	private static RemoteSpace playing;
+    private static RemoteSpace serverInfo;
 
     public static void main(String[] args) throws InterruptedException {
 
@@ -38,11 +39,13 @@ public class Client {
 		spectators.put("Ready", username);
 
         // Starting threads and add listener to spectators
+        new Thread(new ServerListener(serverInfo, GUISpace,username)).start();
         new Thread(new ChatListener(chat, username)).start();
         new Thread(new Pong(ping, active, username)).start();
         SpectatorsListener listener = new SpectatorsListener(spectators, username);
         new Thread(listener).start();
-        new Thread(new GameListener(playing, spectators, GUISpace, username, listener)).start();
+        GameListener gameListener = new GameListener(playing, spectators, GUISpace, username, listener);
+        new Thread(gameListener).start();
 
         System.out.println("Everything is running");
 
@@ -51,12 +54,19 @@ public class Client {
         	Object[] tuple = GUISpace.get(new ActualField("ToClient"), new FormalField(String.class), new FormalField(Object.class));
         	switch ((String)tuple[1]) {
         		case "Move":
-        			playing.put(username, new RPS(((String[])tuple[2])[0]));
+        			if (!gameListener.getPlayed() && listener.isInGame()) {
+						System.out.println("Sent choice " + ((String[])tuple[2])[0]);
+        				playing.put(username, new RPS(((String[])tuple[2])[0]));
+        				gameListener.setPlayed(true);
+					}
+        			break;
+        		case "Send message":
+        			chat.put(username, tuple[2]);
         			break;
         	}
         }
      }
-
+    // Method verifies input IP
     private static void getVerifyIP(Space GUISpace) throws InterruptedException {
         while (true) {
             String ip = (String)GUISpace.get(new ActualField("IP"), new FormalField(String.class))[1];
@@ -66,6 +76,7 @@ public class Client {
 			    ping = new RemoteSpace("tcp://" + ip + ":9001/ping?keep");
 			    spectators = new RemoteSpace("tcp://" + ip + ":9001/spectators?keep");
 			    playing = new RemoteSpace("tcp://" + ip + ":9001/playing?keep");
+			    serverInfo = new RemoteSpace("tcp://" + ip + ":9001/serverInfo?keep");
 			    break;
 			} catch (IOException e) {
         		GUISpace.put("IP Response", "Fail");
@@ -73,7 +84,7 @@ public class Client {
         }
         GUISpace.put("IP Response", "Ok");
     }
-
+    // Method verifies input username
     private static String getVerifyUsername(Space GUISpace, Space chat) throws InterruptedException {
         // Get inputted username and repeat if verification fails
         String username;

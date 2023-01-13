@@ -14,6 +14,7 @@ import group2.Common.RPS;
 class GameListener implements Runnable{
 
     private int[] points;
+    private boolean played = false;
     Space playing, spectators, GUISpace;
     String username;
     SpectatorsListener listener;
@@ -30,17 +31,29 @@ class GameListener implements Runnable{
         while(true) {
             try{
                 //If start of game
-                String opponent = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
-                points = new int[]{0, 0};
-                if (opponent.equals("Disconnected")) {
+                Object[] matchInfo = playing.get(new ActualField("MatchStart"), new ActualField(username), new FormalField(String.class), new FormalField(String.class));
+
+                String player1 = (String)matchInfo[2];
+                String player2 = (String)matchInfo[3];
+                
+                System.out.println("A new match has started: " + player1 + " vs " + player2);
+                
+                if (player2.equals("Disconnected")) {
                     System.out.println("Other user disconnected");
                     listener.leaveGame();
+                    continue;
+                } else {
+                	GUISpace.put("ToGui", "Playing against", new String[]{player1, player2});    
                 }
-                System.out.println("Playing against " + opponent);
-                GUISpace.put("ToGui", "Playing against", new String[]{username, opponent});
+                if (!player1.equals(username)) {
+                    continue;
+                }
+                points = new int[]{0, 0};
+                System.out.println("Playing against " + player2);
                 // If in game
                 while (true) {
                     String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
+                    played = false;
                     if (winner.equals("disconnected")) {
                         System.out.println("Other user disconnected");
                         listener.leaveGame();
@@ -57,6 +70,7 @@ class GameListener implements Runnable{
                             points[1]++;
                         }
                         GUISpace.put("Current score", new int[]{points[0], points[1]});
+                        System.out.println(points[0] + " vs " + points[1]);
                         //If game is over
                         if (points[0] == 2 || points[1] == 2) {
                             if (points[0] == 2) {
@@ -73,6 +87,14 @@ class GameListener implements Runnable{
                 }
             } catch (InterruptedException e) {}
         }
+    }
+
+    public boolean getPlayed() {
+        return played;
+    }
+
+    public void setPlayed(boolean played) {
+        this.played = played;
     }
 
 }

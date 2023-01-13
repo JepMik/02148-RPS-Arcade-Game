@@ -3,12 +3,15 @@ package group2.GUI;
 import org.jspace.Space;
 import org.jspace.ActualField;
 import org.jspace.FormalField;
+import org.jspace.Tuple;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import java.awt.Color;
+import java.util.ArrayList;
+import java.util.EventObject;
 
 public class GameGUI extends JFrame implements ActionListener, Runnable {
 
@@ -20,9 +23,14 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 	private JLabel player1Score;
 	private JLabel player2Score;
 	private JLabel winnerText;
-	private JList<String> chatWindow;
-	private JList<String> scoreboardWindow;
-	private JList<String> queueWindow;
+
+	private JList<String> chatList;
+	private JList<String> scoreboardList;
+	private JList<String> queueList;
+
+	private DefaultListModel<String> chatModel;
+	private DefaultListModel<String> scoreboardModel;
+	private DefaultListModel<String> queueModel;
 
 	private JScrollPane jScrollPane1;
 	private JScrollPane jScrollPane2;
@@ -39,7 +47,6 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
     public GameGUI(Space GUISpace, String username) {
 		this.GUISpace = GUISpace;
 		this.username = username;
-
 
         setSize(800, 800);
         setResizable(false);
@@ -58,24 +65,39 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         paper.setText("Paper");
         scissors.setText("Scissors");
 
+        chatModel = new DefaultListModel<String>();
+
+        chatList.setModel(chatModel);
+        
+        jScrollPane1.setViewportView(chatList);
+
         rock.addActionListener(this);
         paper.addActionListener(this);
         scissors.addActionListener(this);
+		chatField.addActionListener(this);
 
         rock.setVisible(false);
         paper.setVisible(false);
         scissors.setVisible(false);
         winnerText.setVisible(false);
 
-
         setVisible(true);
     }
 
-	public void actionPerformed(ActionEvent e)  {
-		JButton pressed = (JButton)e.getSource();
+	public void actionPerformed(ActionEvent e) {
+		Object source = e.getSource();
 		try {
+			if (source == chatField){//Pressed enter key
+				String message = chatField.getText();
+				if (!message.isEmpty()) {
+					GUISpace.put("ToClient", "Send message", chatField.getText());
+					chatField.setText("");
+				}
+				return;
+			}
+			JButton pressed = (JButton) e.getSource();
 			GUISpace.put("ToClient", "Move", new String[]{pressed.getText()});
-		} catch (InterruptedException ex) {}
+		} catch (InterruptedException ignored) {}
 	}
 
 	public void run() {
@@ -93,16 +115,30 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 							rock.setVisible(true);
 							paper.setVisible(true);
 							scissors.setVisible(true);
+						} else {
+							rock.setVisible(false);
+							paper.setVisible(false);
+							scissors.setVisible(false);
 						}
 						break;
 					case "Current score":
-						int score1 = ((int[])tuple[2])[0];
-						int score2 = ((int[])tuple[2])[1];
+						String score1 = ((String[])tuple[2])[0];
+						String score2 = ((String[])tuple[2])[1];
 						// TODO: update myScore and opponentScore fields in JFrame
-						player1Score.setText("" + score1);
-						player2Score.setText("" + score2);
-                    default:
-						System.out.println("Unknown tuple " + tuple[1]);
+						player1Score.setText(score1);
+						player2Score.setText(score2);
+						break;
+					case "Score board":
+						//TODO: Updates scoreboard with new scores
+						break;
+					case "New message":
+						chatModel.addElement((String)tuple[2]);
+						break;
+						//TODO: Updates chat
+					case "Spectator Q":
+						//TODO: Updates Spectator Q
+					default:
+						System.out.println("[GUI]Unknown tuple " + tuple[1]);
 						break;
 				}
 			} catch (InterruptedException e) {}
@@ -112,11 +148,11 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 
 	private void makeWindow() {
         jScrollPane1 = new JScrollPane();
-		chatWindow = new JList<>();
+		chatList = new JList<>();
 		jScrollPane2 = new JScrollPane();
-		scoreboardWindow = new JList<>();
+		scoreboardList = new JList<>();
 		jScrollPane3 = new JScrollPane();
-		queueWindow = new JList<>();
+		queueList = new JList<>();
 		JLabel scoreboard = new JLabel();
 		JLabel queue = new JLabel();
 		chatField = new JTextField();

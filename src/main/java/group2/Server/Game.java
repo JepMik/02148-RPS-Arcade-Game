@@ -36,10 +36,16 @@ class Game implements Runnable {
             	//Empty playing space
             	playing.getAll(new FormalField(Object.class), new FormalField(Object.class));
 
-                //Send name of opponent
                 System.out.println("New game started: " + clients.get(0) + " vs " + clients.get(1));
-                playing.put(clients.get(0), clients.get(1));
-                playing.put(clients.get(1), clients.get(0));
+
+                //Send names of players
+                infoSpace.put("Broadcast", "MatchStart", new String[]{clients.get(0), clients.get(1)});
+
+                // Reset points
+                infoSpace.put("Broadcast", "Current score", new String[]{clients.get(0), clients.get(1), "0", "0"});
+
+                //playing.put(clients.get(0), clients.get(0), clients.get(1));
+                //playing.put(clients.get(1), clients.get(1), clients.get(0));
 
                 //Determine who wins this round x3
                 int[] points = new int[]{0, 0};
@@ -61,8 +67,9 @@ class Game implements Runnable {
                         playing.put(clients.get(0), clients.get(winner));
                         playing.put(clients.get(1), clients.get(winner));
                         points[winner]++;
-
+                        infoSpace.put("Broadcast", "Current score", new String[]{clients.get(0), clients.get(1), Integer.toString(points[0]), Integer.toString(points[1])});
                     }
+
                 }
                 // Update score of winner or create score if none has been made
                 int idx = points[0] > points[1] ? 0 : 1;
@@ -85,7 +92,10 @@ class Game implements Runnable {
 
     // Used for handling removing a player, if player disconnects and game needs restart
     public void removePlayer(String name) throws InterruptedException {
+		System.out.println("Removing? " + name);
+		System.out.println("In match " + clients.toString());
 		if (clients.contains(name)) {
+            System.out.println("Removing user " + name + " from the game with " + clients.size());
             //Game ongoing even though both/one of the players is disconnected
             connected = 0;
 			if (clients.size() == 2) {

@@ -10,7 +10,7 @@ import org.jspace.Space;
 public class Chat implements Runnable {
     Space chat;
     Space infoSpace;
-     ArrayList<String> clients;
+    ArrayList<String> clients;
 
     public Chat(Space chat, Space infoSpace, ArrayList<String> clients) {
         this.chat = chat;
@@ -28,9 +28,7 @@ public class Chat implements Runnable {
                 Object[] res = infoSpace.query(new ActualField("Clients"), new FormalField(Object.class));
                 clients = (ArrayList<String>)((ArrayList<String>)res[1]).clone();
                 System.out.println(output);
-                for (String client : clients) {
-                    chat.put("output", client, output);
-                }
+                infoSpace.put("Broadcast", "Chat message", output);
             } catch (InterruptedException e) {}
         }
     }

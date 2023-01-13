@@ -14,6 +14,7 @@ public class Server {
         SequentialSpace playing = new SequentialSpace(2);
         SequentialSpace ping = new SequentialSpace();
         SequentialSpace spectators = new SequentialSpace();
+        SequentialSpace serverInfo = new SequentialSpace();
         // Sends game info between classes on the server
         SequentialSpace infoSpace = new SequentialSpace();
 
@@ -22,6 +23,7 @@ public class Server {
         repository.add("playing", playing);
         repository.add("spectators", spectators);
         repository.add("ping", ping);
+        repository.add("serverInfo", serverInfo);
 
 
         Scanner input = new Scanner(System.in);
@@ -42,13 +44,40 @@ public class Server {
         new Thread(new SpectatorUserUpdater(spectators, spectatingUsers)).start();
 
         new Thread(new Mover(infoSpace, spectators, game, spectatingUsers)).start();
+		new Thread(new UserRemover(infoSpace, chat, game)).start();
 
 
         while(true) {
             //If user to remove
-            String user = (String)infoSpace.get(new ActualField("Removed"), new FormalField(String.class))[1];
-            chat.getAll(new ActualField("output"), new ActualField(user), new FormalField(String.class));
-			game.removePlayer(user);
+            Object[] tuple = infoSpace.get(new ActualField("Broadcast"), new FormalField(String.class), new FormalField(Object.class));
+			Object[] response = infoSpace.query(new ActualField("Clients"), new FormalField(Object.class));
+           	ArrayList<String> allClients = (ArrayList<String>)((ArrayList<String>)response[1]).clone();
+           	String player1, player2, score1, score2;
+           	switch ((String)tuple[1]) {
+				case "MatchStart":
+					player1 = ((String[])tuple[2])[0];
+					player2 = ((String[])tuple[2])[1];
+					for (int i=0; i < allClients.size(); i++){
+                        if (allClients.get(i).equals(player2)) {
+                        	playing.put("MatchStart", allClients.get(i), player2, player1);
+                        } else {
+                        	playing.put("MatchStart", allClients.get(i), player1, player2);
+                        }
+                    }
+					break;
+				case "Current score":
+					for (int i=0; i < allClients.size(); i++){
+                        serverInfo.put("Score", allClients.get(i), tuple[2]);
+                    }
+					break;
+				case "Chat message":
+					for (int i=0; i < allClients.size(); i++){
+                        serverInfo.put("New message", allClients.get(i), tuple[2]);
+                    }
+					break;
+				
+            }
+
         }
     }
 }
