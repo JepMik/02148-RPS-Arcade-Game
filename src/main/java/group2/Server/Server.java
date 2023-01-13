@@ -41,10 +41,11 @@ public class Server {
 
         Game game = new Game(playing, infoSpace);
         new Thread(game).start();
-        new Thread(new SpectatorUserUpdater(spectators, spectatingUsers)).start();
+
+        SpectatorUserUpdater spectatorUserUpdater = new SpectatorUserUpdater(spectators, infoSpace, spectatingUsers);
+        new Thread(spectatorUserUpdater).start();
 
         new Thread(new Mover(infoSpace, spectators, game, spectatingUsers)).start();
-		new Thread(new UserRemover(infoSpace, chat, game)).start();
 
 
         while(true) {
@@ -52,7 +53,7 @@ public class Server {
             Object[] tuple = infoSpace.get(new ActualField("Broadcast"), new FormalField(String.class), new FormalField(Object.class));
 			Object[] response = infoSpace.query(new ActualField("Clients"), new FormalField(Object.class));
            	ArrayList<String> allClients = (ArrayList<String>)((ArrayList<String>)response[1]).clone();
-           	String player1, player2, score1, score2;
+           	String player1, player2, score1, score2, user;
            	switch ((String)tuple[1]) {
 				case "MatchStart":
 					player1 = ((String[])tuple[2])[0];
@@ -75,7 +76,30 @@ public class Server {
                         serverInfo.put("New message", allClients.get(i), tuple[2]);
                     }
 					break;
-				
+				case "Spectators":
+					for (int i=0; i < allClients.size(); i++){
+                        serverInfo.put("Spectators", allClients.get(i), tuple[2]);
+                    }
+					break;
+				case "Scoreboard":
+					for (int i=0; i < allClients.size(); i++){
+                        serverInfo.put("Scoreboard", allClients.get(i), tuple[2]);
+                    }
+					break;
+				case "Removed":
+					user = (String)tuple[2];
+					System.out.println("Removing " + user + " from server");
+					chat.getAll(new ActualField("output"), new ActualField(user), new FormalField(String.class));
+
+					// Remove ready tuple, such that the removed user can't join a game
+					spectators.getAll(new ActualField("Ready"), new ActualField(user));
+					spectatorUserUpdater.removeUser(user);
+					game.removePlayer(user);
+					break;
+                case "Moved":
+					user = (String)tuple[2];
+					spectatorUserUpdater.removeUser(user);
+					break;
             }
 
         }

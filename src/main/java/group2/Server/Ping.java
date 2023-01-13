@@ -43,8 +43,9 @@ class Ping implements Runnable {
 		System.out.println("Removing " + username + "...");
 		ArrayList<String> clients = (ArrayList<String>)infoSpace.get(new ActualField("Clients"), new FormalField(Object.class))[1];
 		clients.remove(username);
+		System.out.println("User " + username + " removed");
 		infoSpace.put("Clients", clients);
-		infoSpace.put("Removed", username);
+		infoSpace.put("Broadcast", "Removed", username);
 	}
 }
 

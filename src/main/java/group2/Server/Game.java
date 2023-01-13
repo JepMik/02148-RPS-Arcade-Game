@@ -44,21 +44,22 @@ class Game implements Runnable {
                 // Reset points
                 infoSpace.put("Broadcast", "Current score", new String[]{clients.get(0), clients.get(1), "0", "0"});
 
-                //playing.put(clients.get(0), clients.get(0), clients.get(1));
-                //playing.put(clients.get(1), clients.get(1), clients.get(0));
-
                 //Determine who wins this round x3
                 int[] points = new int[]{0, 0};
                 while (points[0] != 2 && points[1] != 2) {
                     //Get choice from each player
                     RPS[] choices = new RPS[2];
                     for (int i = 0; i < 2; i++) {
-                        RPS choice = (RPS)playing.get(new ActualField(clients.get(i)), new FormalField(RPS.class))[1];
+                        Object[] res = playing.get(new FormalField(String.class), new FormalField(RPS.class));
+                        String name = (String)res[0];
+                        RPS choice = (RPS)res[1];
+                        System.out.println(i + ":" + name + " choose " + choice.getChoice());
                         if (choice.getChoice() == Choice.DISCONNECTED) {
                             continue gameLoop;
                         }
-                        choices[i] = choice;
+                        choices[clients.indexOf(name)] = choice;
                     }
+                    System.out.println("Both player checked");
                     int winner = choices[0].winner(choices[1]);
                     if (winner == 2) {
                         playing.put(clients.get(0), "draw");
@@ -74,6 +75,7 @@ class Game implements Runnable {
                 // Update score of winner or create score if none has been made
                 int idx = points[0] > points[1] ? 0 : 1;
                 scoreboard.put(clients.get(idx), scoreboard.getOrDefault(clients.get(idx), 0)+1);
+                infoSpace.put("Broadcast", "Scoreboard", scoreboard.toString());
                 clients.remove(1-idx);
                 connected--;
                 infoSpace.put("needPlayer");
@@ -99,7 +101,7 @@ class Game implements Runnable {
             //Game ongoing even though both/one of the players is disconnected
             connected = 0;
 			if (clients.size() == 2) {
-                playing.put(name, 							  new RPS(Choice.DISCONNECTED));
+                playing.put(name, 							  	  new RPS(Choice.DISCONNECTED));
 				playing.put(clients.get(1-clients.indexOf(name)), new RPS(Choice.DISCONNECTED)); // To game
 
 				playing.put(clients.get(1-clients.indexOf(name)), "disconnected"); // To user who disconnected

@@ -30,6 +30,7 @@ class ChatUserUpdater implements Runnable {
                 	Object[] response = infoSpace.get(new ActualField("Clients"), new FormalField(Object.class));
                 	clients = (ArrayList<String>)((ArrayList<String>)response[1]).clone();
                 }
+                
 
 				// If username is not unique, send username verification response back to client and wait for a new username
 				if (clients.contains(username)) {

@@ -3,26 +3,38 @@ package group2.GUI;
 import org.jspace.Space;
 import org.jspace.ActualField;
 import org.jspace.FormalField;
-import org.jspace.Tuple;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import java.util.ArrayList;
-import java.util.EventObject;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.*;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;;
+
 
 public class GameGUI extends JFrame implements ActionListener, Runnable {
 
 	private Space GUISpace;
 	private String username;
 
+	private JPanel titlePanel;
+	private JPanel matchPanel;
+	private JPanel infoPanel;
+
 	private JLabel player1Name;
 	private JLabel player2Name;
 	private JLabel player1Score;
 	private JLabel player2Score;
 	private JLabel winnerText;
+	private JLabel queue;
+	private JLabel scoreboard;
+	private JLabel title;
+
 
 	private JList<String> chatList;
 	private JList<String> scoreboardList;
@@ -66,10 +78,16 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         scissors.setText("Scissors");
 
         chatModel = new DefaultListModel<String>();
-
         chatList.setModel(chatModel);
-        
         jScrollPane1.setViewportView(chatList);
+
+        scoreboardModel = new DefaultListModel<String>();
+        scoreboardList.setModel(scoreboardModel);
+        jScrollPane2.setViewportView(scoreboardList);
+
+        queueModel = new DefaultListModel<String>();
+        queueList.setModel(queueModel);
+        jScrollPane3.setViewportView(queueList);
 
         rock.addActionListener(this);
         paper.addActionListener(this);
@@ -82,6 +100,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         winnerText.setVisible(false);
 
         setVisible(true);
+
     }
 
 	public void actionPerformed(ActionEvent e) {
@@ -120,156 +139,248 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 							paper.setVisible(false);
 							scissors.setVisible(false);
 						}
+						if (name1.equals("disconnected")) {
+							player1Name.setText("");
+							player2Name.setText("");
+						}
 						break;
 					case "Current score":
 						String score1 = ((String[])tuple[2])[0];
 						String score2 = ((String[])tuple[2])[1];
-						// TODO: update myScore and opponentScore fields in JFrame
+
 						player1Score.setText(score1);
 						player2Score.setText(score2);
 						break;
-					case "Score board":
-						//TODO: Updates scoreboard with new scores
+					case "Scoreboard":
+						String map = (String)tuple[2];
+
+						HashMap<String, Integer> points = new HashMap<String, Integer>();
+
+						map = map.substring(1, map.length()-1);
+						for (String item : map.split(", ")) {
+							String key = item.split("=")[0];
+							String value = item.split("=")[1];
+							points.put(key, Integer.parseInt(value));
+						}
+
+						System.out.println("Points " + points.entrySet());
+
+						scoreboardModel.clear();
+
+						Map<String, Integer> sorted = points.entrySet().stream()
+				                .sorted(Entry.comparingByValue(Comparator.reverseOrder()))
+				                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+						sorted.forEach((k, v) -> scoreboardModel.addElement(k + ":" + v));
+
+						System.out.println("Updated scoreboard");
 						break;
 					case "New message":
+						System.out.println(scoreboardModel.toString());
 						chatModel.addElement((String)tuple[2]);
 						break;
-						//TODO: Updates chat
-					case "Spectator Q":
-						//TODO: Updates Spectator Q
+					case "Spectators":
+						ArrayList<String> spectators = (ArrayList<String>)tuple[2];
+						queueModel.clear();
+						for (String user : spectators) {
+							queueModel.addElement(user);
+						}
+						break;
 					default:
 						System.out.println("[GUI]Unknown tuple " + tuple[1]);
 						break;
 				}
 			} catch (InterruptedException e) {}
-
+			infoPanel.repaint();
+			infoPanel.revalidate();
+			matchPanel.repaint();
+			matchPanel.revalidate();
 		}
 	}
-
+	// Generated with Netbeans GUI helper
 	private void makeWindow() {
-        jScrollPane1 = new JScrollPane();
-		chatList = new JList<>();
-		jScrollPane2 = new JScrollPane();
-		scoreboardList = new JList<>();
-		jScrollPane3 = new JScrollPane();
-		queueList = new JList<>();
-		JLabel scoreboard = new JLabel();
-		JLabel queue = new JLabel();
-		chatField = new JTextField();
-		JLabel title = new JLabel();
-		player2Name = new JLabel();
-		player1Name = new JLabel();
-		rock = new JButton();
-		paper = new JButton();
-		scissors = new JButton();
-		player1Score = new JLabel();
-		player2Score = new JLabel();
-		winnerText = new JLabel();
 
-		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		infoPanel = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        scoreboardList = new javax.swing.JList<>();
+        scoreboard = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        queueList = new javax.swing.JList<>();
+        queue = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        chatList = new javax.swing.JList<>();
+        chatField = new javax.swing.JTextField();
+        matchPanel = new javax.swing.JPanel();
+        player2Name = new javax.swing.JLabel();
+        player2Score = new javax.swing.JLabel();
+        winnerText = new javax.swing.JLabel();
+        player1Score = new javax.swing.JLabel();
+        rock = new javax.swing.JButton();
+        paper = new javax.swing.JButton();
+        player1Name = new javax.swing.JLabel();
+        scissors = new javax.swing.JButton();
+        titlePanel = new javax.swing.JPanel();
+        title = new javax.swing.JLabel();
 
-		scoreboard.setText("Scoreboard");
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMaximumSize(new java.awt.Dimension(800, 2147483647));
+        setPreferredSize(new java.awt.Dimension(800, 716));
 
-		queue.setText("Queue");
+        javax.swing.GroupLayout infoPanelLayout = new javax.swing.GroupLayout(infoPanel);
+        infoPanel.setLayout(infoPanelLayout);
+        infoPanelLayout.setHorizontalGroup(
+            infoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(infoPanelLayout.createSequentialGroup()
+                .addGap(27, 27, 27)
+                .addGroup(infoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(queue)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(scoreboard)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(31, 31, 31)
+                .addGroup(infoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chatField, javax.swing.GroupLayout.PREFERRED_SIZE, 173, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 173, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(62, Short.MAX_VALUE))
+        );
+        infoPanelLayout.setVerticalGroup(
+            infoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(infoPanelLayout.createSequentialGroup()
+                .addComponent(scoreboard)
+                .addGap(11, 11, 11)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 194, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(queue, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
+            .addGroup(infoPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 461, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chatField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(27, Short.MAX_VALUE))
+        );
 
-		title.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-		title.setText("Rock Paper Scissors Arcade Game");
+        player2Name.setText("Opponent name");
 
+        player2Score.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
+        player2Score.setText("0");
 
-		player1Score.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
-		player1Score.setText("0");
+        winnerText.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        winnerText.setText("You win!");
 
-		player2Score.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
-		player2Score.setText("0");
+        player1Score.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
+        player1Score.setText("0");
+		queue.setText("Spectators Queue");
 
-		winnerText.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
-		winnerText.setText("You win!");
+        rock.setText("Rock");
 
-		GroupLayout layout = new GroupLayout(getContentPane());
-		getContentPane().setLayout(layout);
-		layout.setHorizontalGroup(
-		    layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-		    .addGroup(layout.createSequentialGroup()
-		        .addContainerGap(195, Short.MAX_VALUE)
-		        .addComponent(title)
-		        .addGap(192, 192, 192))
-		    .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-		        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-		            .addGroup(layout.createSequentialGroup()
-		                .addGap(159, 159, 159)
-		                .addComponent(player1Name))
-		            .addGroup(layout.createSequentialGroup()
-		                .addGap(91, 91, 91)
-		                .addComponent(rock)
-		                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-		                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-		                    .addComponent(player2Name)
-		                    .addGroup(layout.createSequentialGroup()
-		                        .addComponent(paper)
-		                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-		                        .addComponent(scissors))))
-		            .addGroup(layout.createSequentialGroup()
-		                .addGap(173, 173, 173)
-		                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-		                    .addComponent(player1Score)
-		                    .addComponent(player2Score, GroupLayout.Alignment.TRAILING)))
-		            .addGroup(layout.createSequentialGroup()
-		                .addGap(119, 119, 119)
-		                .addComponent(winnerText)))
-		        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-		        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-		            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-		                .addComponent(jScrollPane3, GroupLayout.DEFAULT_SIZE, 82, Short.MAX_VALUE)
-		                .addComponent(jScrollPane2))
-		            .addComponent(scoreboard)
-		            .addComponent(queue))
-		        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-		        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-		            .addComponent(jScrollPane1)
-		            .addComponent(chatField, GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE))
-		        .addGap(40, 40, 40))
-		);
-		layout.setVerticalGroup(
-		    layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-		    .addGroup(layout.createSequentialGroup()
-		        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-		            .addGroup(layout.createSequentialGroup()
-		                .addComponent(title)
-		                .addGap(141, 141, 141)
-		                .addComponent(player2Name)
-		                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-		                    .addGroup(layout.createSequentialGroup()
-		                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-		                        .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 461, GroupLayout.PREFERRED_SIZE)
-		                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-		                        .addComponent(chatField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-		                    .addGroup(layout.createSequentialGroup()
-		                        .addGap(51, 51, 51)
-		                        .addComponent(player2Score)
-		                        .addGap(52, 52, 52)
-		                        .addComponent(winnerText)
-		                        .addGap(37, 37, 37)
-		                        .addComponent(player1Score)
-		                        .addGap(0, 0, Short.MAX_VALUE))))
-		            .addGroup(layout.createSequentialGroup()
-		                .addGap(195, 195, 195)
-		                .addComponent(scoreboard)
-		                .addGap(18, 18, 18)
-		                .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 194, GroupLayout.PREFERRED_SIZE)
-		                .addGap(18, 18, 18)
-		                .addComponent(queue)
-		                .addGap(12, 12, 12)
-		                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-		                    .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-		                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-		                            .addComponent(rock)
-		                            .addComponent(paper)
-		                            .addComponent(scissors))
-		                        .addGap(18, 18, 18)
-		                        .addComponent(player1Name)
-		                        .addGap(66, 66, 66))
-		                    .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 209, GroupLayout.PREFERRED_SIZE))))
-		        .addContainerGap(32, Short.MAX_VALUE))
-		);
+        paper.setText("Paper");
+
+        player1Name.setText("My name");
+
+        scissors.setText("Scissors");
+
+        javax.swing.GroupLayout matchPanelLayout = new javax.swing.GroupLayout(matchPanel);
+        matchPanel.setLayout(matchPanelLayout);
+        matchPanelLayout.setHorizontalGroup(
+            matchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, matchPanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(matchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(matchPanelLayout.createSequentialGroup()
+                        .addGap(89, 89, 89)
+                        .addComponent(player1Name))
+                    .addGroup(matchPanelLayout.createSequentialGroup()
+                        .addGap(83, 83, 83)
+                        .addComponent(player2Name))
+                    .addGroup(matchPanelLayout.createSequentialGroup()
+                        .addGap(103, 103, 103)
+                        .addGroup(matchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(player1Score)
+                            .addComponent(player2Score, javax.swing.GroupLayout.Alignment.TRAILING)))
+                    .addGroup(matchPanelLayout.createSequentialGroup()
+                        .addGap(49, 49, 49)
+                        .addComponent(winnerText))
+                    .addGroup(matchPanelLayout.createSequentialGroup()
+                        .addComponent(rock)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(paper)
+                        .addGap(18, 18, 18)
+                        .addComponent(scissors)))
+                .addContainerGap())
+        );
+        matchPanelLayout.setVerticalGroup(
+            matchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, matchPanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(matchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(matchPanelLayout.createSequentialGroup()
+                        .addGap(423, 423, 423)
+                        .addComponent(player1Name))
+                    .addGroup(matchPanelLayout.createSequentialGroup()
+                        .addComponent(player2Name)
+                        .addGap(51, 51, 51)
+                        .addComponent(player2Score)
+                        .addGap(52, 52, 52)
+                        .addComponent(winnerText)
+                        .addGap(37, 37, 37)
+                        .addComponent(player1Score)
+                        .addGap(42, 42, 42)
+                        .addGroup(matchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(rock)
+                            .addComponent(paper)
+                            .addComponent(scissors))
+                        .addGap(43, 43, 43)))
+                .addContainerGap())
+        );
+
+        title.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        title.setText("Rock Paper Scissors Arcade Game");
+
+        javax.swing.GroupLayout titlePanelLayout = new javax.swing.GroupLayout(titlePanel);
+        titlePanel.setLayout(titlePanelLayout);
+        titlePanelLayout.setHorizontalGroup(
+            titlePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(titlePanelLayout.createSequentialGroup()
+                .addComponent(title)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+        titlePanelLayout.setVerticalGroup(
+            titlePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(titlePanelLayout.createSequentialGroup()
+                .addGap(27, 27, 27)
+                .addComponent(title)
+                .addContainerGap(41, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(64, 64, 64)
+                        .addComponent(matchPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(96, 96, 96)
+                        .addComponent(infoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(220, 220, 220)
+                        .addComponent(titlePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(509, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(titlePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 36, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(infoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(matchPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(49, 49, 49))
+        );
 	}
 }

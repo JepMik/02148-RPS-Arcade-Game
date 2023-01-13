@@ -4,6 +4,8 @@ import org.jspace.Space;
 import org.jspace.FormalField;
 import org.jspace.ActualField;
 
+import java.util.ArrayList;
+
 // This class listens for changes/messages from the server and sends to the GUI
 public class ServerListener implements Runnable {
     private Space serverInfo;
@@ -34,7 +36,14 @@ public class ServerListener implements Runnable {
                         // Sends message to GUI
                         GUISpace.put("ToGui", "New message", tuple[2]);
                         break;
-
+                    case "Spectators":
+                        // Sends spectators to GUI
+                        GUISpace.put("ToGui", "Spectators", tuple[2]);
+                        break;
+                    case "Scoreboard":
+                        // Sends spectators to GUI
+                        GUISpace.put("ToGui", "Scoreboard", tuple[2]);
+                        break;
                 }
             } catch (InterruptedException e) {}
         }

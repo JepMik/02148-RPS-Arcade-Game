@@ -35,15 +35,17 @@ class GameListener implements Runnable{
 
                 String player1 = (String)matchInfo[2];
                 String player2 = (String)matchInfo[3];
-                
+
                 System.out.println("A new match has started: " + player1 + " vs " + player2);
-                
+
                 if (player2.equals("Disconnected")) {
                     System.out.println("Other user disconnected");
                     listener.leaveGame();
+	                spectators.put("Joined", username);
+	                spectators.put("Ready", username);
                     continue;
                 } else {
-                	GUISpace.put("ToGui", "Playing against", new String[]{player1, player2});    
+                	GUISpace.put("ToGui", "Playing against", new String[]{player1, player2});
                 }
                 if (!player1.equals(username)) {
                     continue;
@@ -56,6 +58,7 @@ class GameListener implements Runnable{
                     played = false;
                     if (winner.equals("disconnected")) {
                         System.out.println("Other user disconnected");
+                        GUISpace.put("ToGui", "Playing against", new String[]{"disconnected", "disconnected"});
                         listener.leaveGame();
 		                spectators.put("Joined", username);
 		                spectators.put("Ready", username);

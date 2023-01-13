@@ -40,7 +40,6 @@ public class Client {
 
         // Starting threads and add listener to spectators
         new Thread(new ServerListener(serverInfo, GUISpace,username)).start();
-        new Thread(new ChatListener(chat, username)).start();
         new Thread(new Pong(ping, active, username)).start();
         SpectatorsListener listener = new SpectatorsListener(spectators, username);
         new Thread(listener).start();
