@@ -7,7 +7,7 @@ import org.jspace.FormalField;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -64,6 +64,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 
 		Color pink = new Color(255, 0, 255);
 		Color grey = new Color(102, 102, 102);
+		Border raisedBevel = BorderFactory.createRaisedBevelBorder();
         setSize(900, 800);
         setResizable(false);
         setTitle("Game on!");
@@ -77,8 +78,8 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 		infoPanel.setBackground(grey);
 		matchPanel.setBackground(grey);
 		titlePanel.setBackground(grey);
-		titlePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(pink, BorderFactory.createRaisedBevelBorder()));
-		matchPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(pink, BorderFactory.createRaisedBevelBorder()));
+		titlePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(pink), BorderFactory.createRaisedBevelBorder()));
+		matchPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(pink), BorderFactory.createRaisedBevelBorder()));
 		infoPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(pink), BorderFactory.createRaisedBevelBorder()));
 
 
