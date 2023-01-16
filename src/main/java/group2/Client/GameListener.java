@@ -54,8 +54,10 @@ class GameListener implements Runnable{
                 System.out.println("Playing against " + player2);
                 // If in game
                 while (true) {
-                    String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
+                    System.out.println("GameListener-loop start: ");
                     played = false;
+                    String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
+                    System.out.println("Got winner text: " + winner);
                     if (winner.equals("disconnected")) {
                         System.out.println("Other user disconnected");
                         GUISpace.put("ToGui", "Playing against", new String[]{"disconnected", "disconnected"});
@@ -89,6 +91,7 @@ class GameListener implements Runnable{
                     }
                 }
             } catch (InterruptedException e) {}
+            //played = false;
         }
     }
 

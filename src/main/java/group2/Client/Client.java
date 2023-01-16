@@ -53,6 +53,7 @@ public class Client {
         	Object[] tuple = GUISpace.get(new ActualField("ToClient"), new FormalField(String.class), new FormalField(Object.class));
         	switch ((String)tuple[1]) {
         		case "Move":
+        			System.out.println("Trying to play: " + ((String[])tuple[2])[0] + " hasPlayed: " + gameListener.getPlayed() + " inGame: " + listener.isInGame());
         			if (!gameListener.getPlayed() && listener.isInGame()) {
 						System.out.println("Sent choice " + ((String[])tuple[2])[0]);
         				playing.put(username, new RPS(((String[])tuple[2])[0]));
@@ -61,6 +62,11 @@ public class Client {
         			break;
         		case "Send message":
         			chat.put(username, tuple[2]);
+        			break;
+        		case "Exit":
+        			System.out.println("Trying to get token");
+        			active.get(new ActualField("active"));
+        			System.out.println("Client is exiting....");
         			break;
         	}
         }

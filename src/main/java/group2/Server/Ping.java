@@ -26,8 +26,10 @@ class Ping implements Runnable {
 				// Exit if client is unresponsive or wants to exit
 				Object[] response = ping.getp(new ActualField(username), new FormalField(String.class));
 				if (response == null) {
+					System.out.println("The answer as null. Removing " + username);
 					break;
 				} else if (((String)response[1]).equals("break")) {
+					System.out.println(username + " chose to exit!");
 					break;
 				}
 				

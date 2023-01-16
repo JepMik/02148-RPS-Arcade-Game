@@ -30,7 +30,9 @@ class Game implements Runnable {
     public void run() {
         try {
             gameLoop: while (true) {
+                System.out.println("Gameloop start");
                 if (connected < 2) {
+                    System.out.println("Waiting for players");
                     infoSpace.get(new ActualField("gotPlayers"));
                 }
             	//Empty playing space
@@ -85,6 +87,9 @@ class Game implements Runnable {
 
     // Adds players and tells gameInfoSpace when there is enough players for game
     public void addPlayer(String name) throws InterruptedException {
+        if (clients.contains(name)) {
+            return;
+        }
         clients.add(name);
         connected++;
         if (connected == 2) {

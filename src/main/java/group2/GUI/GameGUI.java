@@ -5,16 +5,19 @@ import org.jspace.ActualField;
 import org.jspace.FormalField;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;;
+import java.util.stream.Collectors;
 
 
 public class GameGUI extends JFrame implements ActionListener, Runnable {
@@ -53,6 +56,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 	private JButton paper;
 	private JButton scissors;
 
+
 	private boolean inGame = false;
 
     @SuppressWarnings("unchecked")
@@ -64,11 +68,16 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         setResizable(false);
         setTitle("Game on!");
         getContentPane().setBackground(new Color(102, 102, 102));
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         ImageIcon img = new ImageIcon("resources\rps_logo.jpeg");
         setIconImage(img.getImage());
 
 		makeWindow();
+
+		infoPanel.setBackground(new Color(102,102,102));
+		matchPanel.setBackground(new Color(102,102,102));
+		titlePanel.setBackground(new Color(102,102,102));
+		titlePanel.setBorder(BorderFactory.createRaisedBevelBorder());
 
         player2Name.setText("Player1");
         player1Name.setText("Player2");
@@ -100,7 +109,15 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         winnerText.setVisible(false);
 
         setVisible(true);
-
+        addWindowListener(new WindowAdapter() {
+			@Override
+	            public void windowClosing(WindowEvent e) {
+	                try {
+						System.out.println("Closing window...");
+		                GUISpace.put("ToClient", "Exit", new Object());
+					} catch (InterruptedException ie) {}
+	            }
+        	});
     }
 
 	public void actionPerformed(ActionEvent e) {
@@ -144,14 +161,14 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 							player2Name.setText("");
 						}
 						break;
-					case "Current score":
+					case "Current score": //Updates current score
 						String score1 = ((String[])tuple[2])[0];
 						String score2 = ((String[])tuple[2])[1];
 
 						player1Score.setText(score1);
 						player2Score.setText(score2);
 						break;
-					case "Scoreboard":
+					case "Scoreboard": //Updates scoreboard
 						String map = (String)tuple[2];
 
 						HashMap<String, Integer> points = new HashMap<String, Integer>();
@@ -176,11 +193,11 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 
 						System.out.println("Updated scoreboard");
 						break;
-					case "New message":
+					case "New message": // Receives message
 						System.out.println(scoreboardModel.toString());
 						chatModel.addElement((String)tuple[2]);
 						break;
-					case "Spectators":
+					case "Spectators": //Updates spectators
 						ArrayList<String> spectators = (ArrayList<String>)tuple[2];
 						queueModel.clear();
 						for (String user : spectators) {
@@ -223,7 +240,6 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         titlePanel = new javax.swing.JPanel();
         title = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMaximumSize(new java.awt.Dimension(800, 2147483647));
         setPreferredSize(new java.awt.Dimension(800, 716));
 
