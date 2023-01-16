@@ -20,9 +20,12 @@ class SpectatorsListener implements Runnable{
         while(true) {
             try{
                 Object[] output = spectators.get(new ActualField(username));
-                inGame = true;
             } catch (InterruptedException e) {}
         }
+    }
+
+    public void joinGame() {
+        inGame = true;
     }
 
     public void leaveGame() {

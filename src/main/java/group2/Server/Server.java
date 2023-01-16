@@ -33,73 +33,80 @@ public class Server {
         repository.addGate("tcp://" + ip + ":9001/?keep");
         System.out.println("Server is up...");
 
-        ArrayList<String> spectatingUsers = new ArrayList<String>();
         ArrayList<String> clients = new ArrayList<String>();
-        
+
         new Thread(new Chat(chat, infoSpace, clients)).start();
         new Thread(new ChatUserUpdater(chat, infoSpace, clients, ping)).start();
 
         Game game = new Game(playing, infoSpace);
         new Thread(game).start();
 
-        SpectatorUserUpdater spectatorUserUpdater = new SpectatorUserUpdater(spectators, infoSpace, spectatingUsers);
+        SpectatorUserUpdater spectatorUserUpdater = new SpectatorUserUpdater(spectators, infoSpace);
         new Thread(spectatorUserUpdater).start();
 
-        new Thread(new Mover(infoSpace, spectators, game, spectatingUsers)).start();
+        new Thread(new Mover(infoSpace, spectators, game)).start();
 
 
-        while(true) {
+        while (true) {
             //If user to remove
             Object[] tuple = infoSpace.get(new ActualField("Broadcast"), new FormalField(String.class), new FormalField(Object.class));
-			Object[] response = infoSpace.query(new ActualField("Clients"), new FormalField(Object.class));
-           	ArrayList<String> allClients = (ArrayList<String>)((ArrayList<String>)response[1]).clone();
-           	String player1, player2, score1, score2, user;
-           	switch ((String)tuple[1]) {
-				case "MatchStart":
-					player1 = ((String[])tuple[2])[0];
-					player2 = ((String[])tuple[2])[1];
-					for (int i=0; i < allClients.size(); i++){
+            Object[] response = infoSpace.query(new ActualField("Clients"), new FormalField(Object.class));
+            ArrayList<String> allClients = (ArrayList<String>) ((ArrayList<String>) response[1]).clone();
+            String player1, player2, score1, score2, user;
+            switch ((String) tuple[1]) {
+                case "MatchStart":
+                    player1 = ((String[]) tuple[2])[0];
+                    player2 = ((String[]) tuple[2])[1];
+                    for (int i = 0; i < allClients.size(); i++) {
                         if (allClients.get(i).equals(player2)) {
-                        	playing.put("MatchStart", allClients.get(i), player2, player1);
+                            playing.put("MatchStart", allClients.get(i), player2, player1);
                         } else {
-                        	playing.put("MatchStart", allClients.get(i), player1, player2);
+                            playing.put("MatchStart", allClients.get(i), player1, player2);
                         }
                     }
-					break;
-				case "Current score":
-					for (int i=0; i < allClients.size(); i++){
+                    break;
+                case "Current score":
+                    for (int i = 0; i < allClients.size(); i++) {
                         serverInfo.put("Score", allClients.get(i), tuple[2]);
                     }
-					break;
-				case "Chat message":
-					for (int i=0; i < allClients.size(); i++){
+                    break;
+                case "Chat message":
+                    for (int i = 0; i < allClients.size(); i++) {
                         serverInfo.put("New message", allClients.get(i), tuple[2]);
                     }
-					break;
-				case "Spectators":
-					for (int i=0; i < allClients.size(); i++){
+                    break;
+                case "Spectators":
+                    for (int i = 0; i < allClients.size(); i++) {
                         serverInfo.put("Spectators", allClients.get(i), tuple[2]);
                     }
-					break;
-				case "Scoreboard":
-					for (int i=0; i < allClients.size(); i++){
+                    break;
+                case "Scoreboard":
+                    for (int i = 0; i < allClients.size(); i++) {
                         serverInfo.put("Scoreboard", allClients.get(i), tuple[2]);
                     }
-					break;
-				case "Removed":
-					user = (String)tuple[2];
-					System.out.println("Removing " + user + " from server");
-					chat.getAll(new ActualField("output"), new ActualField(user), new FormalField(String.class));
+                    break;
+                case "Removed":
+                    user = (String) tuple[2];
+                    System.out.println("Removing " + user + " from server");
+                    chat.getAll(new ActualField("output"), new ActualField(user), new FormalField(String.class));
 
-					// Remove ready tuple, such that the removed user can't join a game
-					spectators.getAll(new ActualField("Ready"), new ActualField(user));
-					spectatorUserUpdater.removeUser(user);
-					game.removePlayer(user);
-					break;
-                case "Moved":
-					user = (String)tuple[2];
-					spectatorUserUpdater.removeUser(user);
-					break;
+                    // Remove ready tuple, such that the removed user can't join a game
+                    spectators.getAll(new ActualField("Ready"), new ActualField(user));
+                    spectatorUserUpdater.removeUser(user);
+                    game.removePlayer(user);
+                    break;
+                case "GiveInfo": // Gives info to newly joined user
+                    user = (String) tuple[2];
+                	System.out.println("Sent info to " + user);
+                    if (game.gameStarted()) {
+						playing.put("MatchStart", user, game.getPlayer1(), game.getPlayer2());
+	                    serverInfo.put("Score", user, game.getScore());
+	                    serverInfo.put("Spectators", user, spectatorUserUpdater.getSpectators());
+                    }
+                    if (game.getScoreBoard().keySet().size() > 0) {
+	                    serverInfo.put("Scoreboard", user, game.getScoreBoard().toString());   
+                    }
+                    break;
             }
 
         }

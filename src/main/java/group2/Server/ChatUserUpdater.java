@@ -48,6 +48,8 @@ class ChatUserUpdater implements Runnable {
 				//Only send valid after user has been added
 		        chat.put(username, "response", "valid");
 
+				infoSpace.put("Broadcast", "GiveInfo", username);
+
 		    	new Thread(new Ping(ping, infoSpace, username)).start();
                 hasPut = true;
             } catch (InterruptedException e) {}

@@ -16,8 +16,10 @@ import org.jspace.FormalField;
 class Game implements Runnable {
     Space playing, infoSpace;
     private int connected = 0;
+    private boolean started = false;
     private ArrayList<String> clients = new ArrayList<>();
     private HashMap<String, Integer> scoreboard = new HashMap<>();
+    private int[] points;
 
     //Game constructor
     public Game(Space playing, Space infoSpace) throws InterruptedException {
@@ -31,12 +33,14 @@ class Game implements Runnable {
         try {
             gameLoop: while (true) {
                 System.out.println("Gameloop start");
+                started = false;
                 if (connected < 2) {
                     System.out.println("Waiting for players");
                     infoSpace.get(new ActualField("gotPlayers"));
                 }
+                started = true;
             	//Empty playing space
-            	playing.getAll(new FormalField(Object.class), new FormalField(Object.class));
+                //playing.getAll(new FormalField(Object.class), new FormalField(Object.class));
 
                 System.out.println("New game started: " + clients.get(0) + " vs " + clients.get(1));
 
@@ -47,7 +51,8 @@ class Game implements Runnable {
                 infoSpace.put("Broadcast", "Current score", new String[]{clients.get(0), clients.get(1), "0", "0"});
 
                 //Determine who wins this round x3
-                int[] points = new int[]{0, 0};
+				points = new int[]{0, 0};
+
                 while (points[0] != 2 && points[1] != 2) {
                     //Get choice from each player
                     RPS[] choices = new RPS[2];
@@ -56,12 +61,12 @@ class Game implements Runnable {
                         String name = (String)res[0];
                         RPS choice = (RPS)res[1];
                         System.out.println(i + ":" + name + " choose " + choice.getChoice());
-                        if (choice.getChoice() == Choice.DISCONNECTED) {
-                            continue gameLoop;
-                        }
                         choices[clients.indexOf(name)] = choice;
                     }
                     System.out.println("Both player checked");
+                    if (choices[0].getChoice() == Choice.DISCONNECTED || choices[1].getChoice() == Choice.DISCONNECTED) {
+                        continue gameLoop;
+                    }
                     int winner = choices[0].winner(choices[1]);
                     if (winner == 2) {
                         playing.put(clients.get(0), "draw");
@@ -76,6 +81,7 @@ class Game implements Runnable {
                 }
                 // Update score of winner or create score if none has been made
                 int idx = points[0] > points[1] ? 0 : 1;
+                System.out.println("Match over removing: " + clients.get(1-idx));
                 scoreboard.put(clients.get(idx), scoreboard.getOrDefault(clients.get(idx), 0)+1);
                 infoSpace.put("Broadcast", "Scoreboard", scoreboard.toString());
                 clients.remove(1-idx);
@@ -88,6 +94,7 @@ class Game implements Runnable {
     // Adds players and tells gameInfoSpace when there is enough players for game
     public void addPlayer(String name) throws InterruptedException {
         if (clients.contains(name)) {
+            infoSpace.put("needPlayer");
             return;
         }
         clients.add(name);
@@ -117,7 +124,37 @@ class Game implements Runnable {
         }
     }
 
+    public boolean gameStarted() {
+        return started;
+    }
+
+    public String getPlayer1() {
+        System.out.println("[Game]Clients: " + clients.size() + " " + clients);
+        if (clients.size() > 0) {
+            return clients.get(0);
+        }
+        return "Player1";
+    }
+    // Returns player2
+    public String getPlayer2() {
+        System.out.println("[Game]Clients: " + clients.size() + " " + clients);
+        if (clients.size() > 1) {
+            return clients.get(1);
+        }
+        return "Player2";
+    }
+    // Returns amount of connected players
     public int connectedPlayers() {
         return connected;
     }
+
+    // Returns the scoreboard of the game
+    public HashMap<String, Integer> getScoreBoard() {
+        return scoreboard;
+    }
+
+    public String[] getScore() {
+		return new String[]{clients.get(0), clients.get(1), Integer.toString(points[0]), Integer.toString(points[1])};
+    }
+
 }

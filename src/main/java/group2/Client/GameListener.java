@@ -31,12 +31,15 @@ class GameListener implements Runnable{
         while(true) {
             try{
                 //If start of game
+                System.out.println("Waiting for game...");
                 Object[] matchInfo = playing.get(new ActualField("MatchStart"), new ActualField(username), new FormalField(String.class), new FormalField(String.class));
 
                 String player1 = (String)matchInfo[2];
                 String player2 = (String)matchInfo[3];
 
                 System.out.println("A new match has started: " + player1 + " vs " + player2);
+
+				listener.joinGame();
 
                 if (player2.equals("Disconnected")) {
                     System.out.println("Other user disconnected");
@@ -58,6 +61,7 @@ class GameListener implements Runnable{
                     played = false;
                     String winner = (String)playing.get(new ActualField(username), new FormalField(String.class))[1];
                     System.out.println("Got winner text: " + winner);
+                    GUISpace.put("ToGui", "RoundResult", winner);
                     if (winner.equals("disconnected")) {
                         System.out.println("Other user disconnected");
                         GUISpace.put("ToGui", "Playing against", new String[]{"disconnected", "disconnected"});

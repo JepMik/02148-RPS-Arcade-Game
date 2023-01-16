@@ -5,6 +5,9 @@ import org.jspace.FormalField;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import javax.swing.*;
 
 public class LoginGUI extends JFrame implements ActionListener {
@@ -28,7 +31,7 @@ public class LoginGUI extends JFrame implements ActionListener {
         setSize(600, 400);
         setResizable(false);
 
-		ImageIcon img = new ImageIcon("resources\rps_logo.jpeg");
+		ImageIcon img = new ImageIcon("src/resources/rps_logo.jpeg");
 		setIconImage(img.getImage());
 
 		// Labels, Buttons and Text fields

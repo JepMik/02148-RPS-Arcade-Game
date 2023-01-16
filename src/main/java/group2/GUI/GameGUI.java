@@ -4,18 +4,16 @@ import org.jspace.Space;
 import org.jspace.ActualField;
 import org.jspace.FormalField;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.*;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -40,7 +38,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 
 
 	private JList<String> chatList;
-	private JList<String> scoreboardList;
+	private JTextArea scoreboardArea;
 	private JList<String> queueList;
 
 	private DefaultListModel<String> chatModel;
@@ -56,7 +54,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 	private JButton paper;
 	private JButton scissors;
 
-
+	private String sBoard = "";
 	private boolean inGame = false;
 
     @SuppressWarnings("unchecked")
@@ -69,21 +67,28 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         setTitle("Game on!");
         getContentPane().setBackground(new Color(102, 102, 102));
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        ImageIcon img = new ImageIcon("resources\rps_logo.jpeg");
-        setIconImage(img.getImage());
+        ImageIcon img = new ImageIcon("src/resources/rps_logo.jpeg");
+		setIconImage(img.getImage());
 
 		makeWindow();
 
 		infoPanel.setBackground(new Color(102,102,102));
 		matchPanel.setBackground(new Color(102,102,102));
 		titlePanel.setBackground(new Color(102,102,102));
-		titlePanel.setBorder(BorderFactory.createRaisedBevelBorder());
+		titlePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(255, 0, 255)), BorderFactory.createRaisedBevelBorder()));
+		matchPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(255, 0, 255)), BorderFactory.createRaisedBevelBorder()));
+		infoPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(255, 0, 255)), BorderFactory.createRaisedBevelBorder()));
 
-        player2Name.setText("Player1");
+
+		player2Name.setText("Player1");
         player1Name.setText("Player2");
+		winnerText.setText("");
 
+		rock.setBackground(new Color(255, 0, 255));
         rock.setText("Rock");
+		paper.setBackground(new Color(255, 0, 255));
         paper.setText("Paper");
+		scissors.setBackground(new Color(255, 0, 255));
         scissors.setText("Scissors");
 
         chatModel = new DefaultListModel<String>();
@@ -91,8 +96,8 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         jScrollPane1.setViewportView(chatList);
 
         scoreboardModel = new DefaultListModel<String>();
-        scoreboardList.setModel(scoreboardModel);
-        jScrollPane2.setViewportView(scoreboardList);
+        scoreboardArea.setEditable(false);
+        jScrollPane2.setViewportView(scoreboardArea);
 
         queueModel = new DefaultListModel<String>();
         queueList.setModel(queueModel);
@@ -106,7 +111,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         rock.setVisible(false);
         paper.setVisible(false);
         scissors.setVisible(false);
-        winnerText.setVisible(false);
+        winnerText.setVisible(true);
 
         setVisible(true);
         addWindowListener(new WindowAdapter() {
@@ -140,8 +145,12 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 		while (true) {
 			try {
 				Object[] tuple = GUISpace.get(new ActualField("ToGui"), new FormalField(String.class), new FormalField(Object.class));
+				System.out.println("Got msg: " + (String)tuple[1]);
+				System.out.println("Whole: " + tuple);
+
 				switch ((String)tuple[1]) {
 					case "Playing against":
+						winnerText.setText("");
 						String name1 = ((String[])tuple[2])[0];
 						String name2 = ((String[])tuple[2])[1];
 						// update myName and opponentName fields in JFrame
@@ -187,9 +196,9 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 						Map<String, Integer> sorted = points.entrySet().stream()
 				                .sorted(Entry.comparingByValue(Comparator.reverseOrder()))
 				                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
-						sorted.forEach((k, v) -> scoreboardModel.addElement(k + ":" + v));
-						scoreboardList.setModel(scoreboardModel);
+						sBoard = "";
+						sorted.forEach((k, v) -> sBoard+=k+":"+v+"\n");//scoreboardModel.addElement(k + ":" + v));
+						scoreboardArea.setText(sBoard);
 
 						System.out.println("Updated scoreboard");
 						break;
@@ -203,6 +212,10 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 						for (String user : spectators) {
 							queueModel.addElement(user);
 						}
+						break;
+					case "RoundResult":
+						String winner = (String)tuple[2];
+						winnerText.setText(winner.equals("draw") ? winner : winner + " won!");
 						break;
 					default:
 						System.out.println("[GUI]Unknown tuple " + tuple[1]);
@@ -220,7 +233,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 
 		infoPanel = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        scoreboardList = new javax.swing.JList<>();
+        scoreboardArea = new JTextArea();
         scoreboard = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         queueList = new javax.swing.JList<>();
@@ -239,6 +252,8 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
         scissors = new javax.swing.JButton();
         titlePanel = new javax.swing.JPanel();
         title = new javax.swing.JLabel();
+
+
 
         setMaximumSize(new java.awt.Dimension(800, 2147483647));
         setPreferredSize(new java.awt.Dimension(800, 716));
@@ -354,8 +369,12 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
                 .addContainerGap())
         );
 
-        title.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        title.setText("Rock Paper Scissors Arcade Game");
+		ImageIcon titlePic = new ImageIcon("src/resources/TitleLogo.png");
+		titlePic.setImage(titlePic.getImage().getScaledInstance(500,100,Image.SCALE_DEFAULT));
+		title = new JLabel(titlePic);
+        titlePanel.add(title);
+		//title.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        //title.setText("Rock Paper Scissors Arcade Game");
 
         javax.swing.GroupLayout titlePanelLayout = new javax.swing.GroupLayout(titlePanel);
         titlePanel.setLayout(titlePanelLayout);

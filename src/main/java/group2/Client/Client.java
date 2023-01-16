@@ -6,8 +6,6 @@ import group2.GUI.GameGUI;
 import group2.GUI.LoginGUI;
 
 import java.io.IOException;
-import java.util.Scanner;
-
 
 public class Client {
 
@@ -17,7 +15,7 @@ public class Client {
 	private static RemoteSpace playing;
     private static RemoteSpace serverInfo;
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
 
         //Open main menu
         Space GUISpace = new SequentialSpace();
