@@ -62,7 +62,9 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 		this.GUISpace = GUISpace;
 		this.username = username;
 
-        setSize(800, 800);
+		Color pink = new Color(255, 0, 255);
+		Color grey = new Color(102, 102, 102);
+        setSize(900, 800);
         setResizable(false);
         setTitle("Game on!");
         getContentPane().setBackground(new Color(102, 102, 102));
@@ -72,23 +74,23 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 
 		makeWindow();
 
-		infoPanel.setBackground(new Color(102,102,102));
-		matchPanel.setBackground(new Color(102,102,102));
-		titlePanel.setBackground(new Color(102,102,102));
-		titlePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(255, 0, 255)), BorderFactory.createRaisedBevelBorder()));
-		matchPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(255, 0, 255)), BorderFactory.createRaisedBevelBorder()));
-		infoPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(255, 0, 255)), BorderFactory.createRaisedBevelBorder()));
+		infoPanel.setBackground(grey);
+		matchPanel.setBackground(grey);
+		titlePanel.setBackground(grey);
+		titlePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(pink, BorderFactory.createRaisedBevelBorder()));
+		matchPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(pink, BorderFactory.createRaisedBevelBorder()));
+		infoPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(pink), BorderFactory.createRaisedBevelBorder()));
 
 
 		player2Name.setText("Player1");
         player1Name.setText("Player2");
 		winnerText.setText("");
 
-		rock.setBackground(new Color(255, 0, 255));
+		rock.setBackground(pink);
         rock.setText("Rock");
-		paper.setBackground(new Color(255, 0, 255));
+		paper.setBackground(pink);
         paper.setText("Paper");
-		scissors.setBackground(new Color(255, 0, 255));
+		scissors.setBackground(pink);
         scissors.setText("Scissors");
 
         chatModel = new DefaultListModel<String>();
@@ -294,6 +296,11 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
                 .addContainerGap(27, Short.MAX_VALUE))
         );
 
+		// Set infopanel to be not resizable
+		infoPanel.setMaximumSize(new Dimension(400, 600));
+		infoPanel.setMinimumSize(new Dimension(400, 600));
+
+
         player2Name.setText("Opponent name");
 
         player2Score.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
@@ -368,6 +375,9 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
                         .addGap(43, 43, 43)))
                 .addContainerGap())
         );
+		// Set matchpanel to be not resizable
+		matchPanel.setMaximumSize(new Dimension(400, 600));
+		matchPanel.setMinimumSize(new Dimension(400,600));
 
 		ImageIcon titlePic = new ImageIcon("src/resources/TitleLogo.png");
 		titlePic.setImage(titlePic.getImage().getScaledInstance(500,100,Image.SCALE_DEFAULT));
