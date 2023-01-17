@@ -25,6 +25,8 @@ public class LoginGUI extends JFrame implements ActionListener {
 		this.GUISpace = GUISpace;
 
 		// Frame init
+		Font font = new java.awt.Font("Segoe UI", 0, 34);
+		Font font1 = new java.awt.Font("Segoe UI", 0, 26);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setBackground(new Color(102, 102, 102));
 		setTitle("Rock Paper Scissors Arcade!");
@@ -39,14 +41,17 @@ public class LoginGUI extends JFrame implements ActionListener {
 		jLabel1.setFont(f1);
 		jLabel1.setForeground(new Color(255, 0, 255));
 		jLabel1.setText("Rock Paper Scissors Arcade");
+		jLabel1.setFont(font);
 
 		JLabel jLabel2 = new JLabel();
 		jLabel2.setForeground(new Color(255, 0, 255));
 		jLabel2.setText("IP:");
+		jLabel2.setFont(font1);
 
 		JLabel jLabel3 = new JLabel();
 		jLabel3.setForeground(new Color(255, 0, 255));
 		jLabel3.setText("Username:");
+		jLabel3.setFont(font1);
 
 		ipTextField = new JTextField();
         usernameTextField = new JTextField();
