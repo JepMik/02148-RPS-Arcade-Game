@@ -1,13 +1,9 @@
 package group2.GUI;
-
 import org.jspace.Space;
 import org.jspace.ActualField;
 import org.jspace.FormalField;
-
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -149,10 +145,9 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 			try {
 				Object[] tuple = GUISpace.get(new ActualField("ToGui"), new FormalField(String.class), new FormalField(Object.class));
 				System.out.println("Got msg: " + (String)tuple[1]);
-				System.out.println("Whole: " + tuple);
-
 				switch ((String)tuple[1]) {
 					case "Playing against":
+						System.out.println("Whole: " + Arrays.toString((String[])tuple[2]));
 						winnerText.setText("");
 						String name1 = ((String[])tuple[2])[0];
 						String name2 = ((String[])tuple[2])[1];
@@ -174,6 +169,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 						}
 						break;
 					case "Current score": //Updates current score
+						System.out.println("Whole: " + Arrays.toString((String[])tuple[2]));
 						String score1 = ((String[])tuple[2])[0];
 						String score2 = ((String[])tuple[2])[1];
 
@@ -181,6 +177,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 						player2Score.setText(score2);
 						break;
 					case "Scoreboard": //Updates scoreboard
+						System.out.println("Whole: " + (String)tuple[2]);
 						String map = (String)tuple[2];
 
 						HashMap<String, Integer> points = new HashMap<String, Integer>();
@@ -206,10 +203,12 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 						System.out.println("Updated scoreboard");
 						break;
 					case "New message": // Receives message
+						System.out.println("Whole: " + (String)tuple[2]);
 						System.out.println(scoreboardModel.toString());
 						chatModel.addElement((String)tuple[2]);
 						break;
 					case "Spectators": //Updates spectators
+						System.out.println("Whole: " + (ArrayList<String>)tuple[2]);
 						ArrayList<String> spectators = (ArrayList<String>)tuple[2];
 						queueModel.clear();
 						for (String user : spectators) {
@@ -217,6 +216,7 @@ public class GameGUI extends JFrame implements ActionListener, Runnable {
 						}
 						break;
 					case "RoundResult":
+						System.out.println("Whole: " + (String)tuple[2]);
 						String winner = (String)tuple[2];
 						winnerText.setText(winner.equals("draw") ? winner : winner + " won!");
 						break;

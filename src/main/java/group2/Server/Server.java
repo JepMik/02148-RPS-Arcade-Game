@@ -95,9 +95,14 @@ public class Server {
                     spectatorUserUpdater.removeUser(user);
                     game.removePlayer(user);
                     break;
+                case "Moved":
+                    user = (String) tuple[2];
+                    System.out.println(user + " got moved");
+                    spectatorUserUpdater.movedUser();
+                    break;
                 case "GiveInfo": // Gives info to newly joined user
                     user = (String) tuple[2];
-                	System.out.println("Sent info to " + user);
+                	System.out.println("Sent info to " + user + " game is started: " + game.gameStarted());
                     if (game.gameStarted()) {
 						playing.put("MatchStart", user, game.getPlayer1(), game.getPlayer2());
 	                    serverInfo.put("Score", user, game.getScore());

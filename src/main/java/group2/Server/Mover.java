@@ -30,7 +30,10 @@ class Mover implements Runnable {
                     //Move in and
                     Object[] res = infoSpace.get(new ActualField("Spectators"), new FormalField(Object.class));
                 	clients = (ArrayList<String>)((ArrayList<String>)res[1]).clone();
-
+					if (clients.size() == 0) {
+                    	infoSpace.put("Spectators", clients);
+                    	continue;
+                    }
                     String user = clients.get(0);
                     System.out.println("Moved user " + user + " from spectators to game");
                     clients.remove(0);

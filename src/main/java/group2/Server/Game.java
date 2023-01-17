@@ -1,13 +1,9 @@
 package group2.Server;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import org.jspace.Space;
-
 import group2.Common.Choice;
 import group2.Common.RPS;
-
 import org.jspace.ActualField;
 import org.jspace.FormalField;
 
@@ -33,6 +29,7 @@ class Game implements Runnable {
         try {
             gameLoop: while (true) {
                 System.out.println("Gameloop start");
+                //playing.getAll(new FormalField(Object.class), new FormalField(Object.class));
                 started = false;
                 if (connected < 2) {
                     System.out.println("Waiting for players");
@@ -40,7 +37,7 @@ class Game implements Runnable {
                 }
                 started = true;
             	//Empty playing space
-                //playing.getAll(new FormalField(Object.class), new FormalField(Object.class));
+                playing.getAll(new FormalField(Object.class), new FormalField(RPS.class));
 
                 System.out.println("New game started: " + clients.get(0) + " vs " + clients.get(1));
 
@@ -56,12 +53,12 @@ class Game implements Runnable {
                 while (points[0] != 2 && points[1] != 2) {
                     //Get choice from each player
                     RPS[] choices = new RPS[2];
-                    for (int i = 0; i < 2; i++) {
+                    while (choices[0] == null || choices[1] == null) {
                         Object[] res = playing.get(new FormalField(String.class), new FormalField(RPS.class));
                         String name = (String)res[0];
                         RPS choice = (RPS)res[1];
-                        System.out.println(i + ":" + name + " choose " + choice.getChoice());
-                        choices[clients.indexOf(name)] = choice;
+                        System.out.println(name + " choose " + choice.getChoice());
+                        choices[!clients.contains(name) ? 0 : clients.indexOf(name)] = choice;
                     }
                     System.out.println("Both player checked");
                     if (choices[0].getChoice() == Choice.DISCONNECTED || choices[1].getChoice() == Choice.DISCONNECTED) {

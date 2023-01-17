@@ -1,7 +1,5 @@
 package group2.Server;
-
 import java.util.ArrayList;
-
 import org.jspace.ActualField;
 import org.jspace.FormalField;
 import org.jspace.Space;
@@ -48,7 +46,7 @@ class SpectatorUserUpdater implements Runnable {
         infoSpace.put("Spectators", clients);
     }
 
-    public void movedUser(String user) throws InterruptedException {
+    public void movedUser() throws InterruptedException {
         Object[] res = infoSpace.get(new ActualField("Spectators"), new FormalField(Object.class));
 		clients = (ArrayList<String>)((ArrayList<String>)res[1]).clone();
 		infoSpace.put("Broadcast", "Spectators", clients);
@@ -56,6 +54,7 @@ class SpectatorUserUpdater implements Runnable {
     }
 
     public ArrayList<String> getSpectators() {
+        System.out.println("[SpectatorUserUpdater]Current clients: " + clients);
         return clients;
     }
 }

@@ -1,14 +1,8 @@
 package group2.Client;
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import org.jspace.ActualField;
 import org.jspace.RemoteSpace;
 import org.jspace.FormalField;
 import org.jspace.Space;
-
-import group2.Common.Choice;
-import group2.Common.RPS;
 
 //RPS game loop, sending and receiving info from the game space
 class GameListener implements Runnable{

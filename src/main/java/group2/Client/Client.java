@@ -1,10 +1,8 @@
 package group2.Client;
-
 import org.jspace.*;
 import group2.Common.RPS;
 import group2.GUI.GameGUI;
 import group2.GUI.LoginGUI;
-
 import java.io.IOException;
 
 public class Client {
@@ -15,7 +13,7 @@ public class Client {
 	private static RemoteSpace playing;
     private static RemoteSpace serverInfo;
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws InterruptedException {
 
         //Open main menu
         Space GUISpace = new SequentialSpace();
