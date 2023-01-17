@@ -7,33 +7,39 @@ import org.jspace.FormalField;
 import org.jspace.Space;
 
 class Mover implements Runnable {
-    Space InfoSpace;
+    Space infoSpace;
     Space spectators;
     Game game;
     ArrayList<String> clients;
 
-    public Mover(Space InfoSpace, Space spectators, Game game, ArrayList<String> clients) {
-        this.InfoSpace = InfoSpace;
+    public Mover(Space infoSpace, Space spectators, Game game) {
+        this.infoSpace = infoSpace;
         this.spectators = spectators;
         this.game = game;
-        this.clients = clients;
     }
 
     public void run() {
         while(true) {
             try {
                 //wait until need new player
-                InfoSpace.get(new ActualField("needPlayer"));
+                infoSpace.get(new ActualField("needPlayer"));
                 //wait until there is a player in the queue
                 spectators.query(new ActualField("Ready"), new FormalField(String.class));
                 //Move in to fill space
                 if (game.connectedPlayers() < 2) { // If there is two players in playing space
                     //Move in and
-                    System.out.println("Moved user " + clients.get(0) + " from spectators to game");
-                    spectators.get(new ActualField("Ready"), new FormalField(String.class));
-                    spectators.put(clients.get(0));
-                    game.addPlayer(clients.get(0));
+                    Object[] res = infoSpace.get(new ActualField("Spectators"), new FormalField(Object.class));
+                	clients = (ArrayList<String>)((ArrayList<String>)res[1]).clone();
+
+                    String user = clients.get(0);
+                    System.out.println("Moved user " + user + " from spectators to game");
                     clients.remove(0);
+                    infoSpace.put("Broadcast", "Moved", user);
+                    spectators.get(new ActualField("Ready"), new FormalField(String.class));
+                    spectators.put(user);
+                    game.addPlayer(user);
+
+                    infoSpace.put("Spectators", clients);
                 }
             } catch (InterruptedException e) {}
         }

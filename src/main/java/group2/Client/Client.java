@@ -2,55 +2,109 @@ package group2.Client;
 
 import org.jspace.*;
 import group2.Common.RPS;
+import group2.GUI.GameGUI;
+import group2.GUI.LoginGUI;
 
 import java.io.IOException;
-import java.util.Scanner;
-
 
 public class Client {
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-		// Input scanner
-		Scanner input = new Scanner(System.in);
+	private static RemoteSpace chat;
+	private static RemoteSpace ping;
+	private static RemoteSpace spectators;
+	private static RemoteSpace playing;
+    private static RemoteSpace serverInfo;
+
+    public static void main(String[] args) throws InterruptedException, IOException {
+
+        //Open main menu
+        Space GUISpace = new SequentialSpace();
+        LoginGUI loginGui = new LoginGUI(GUISpace);
+
+		// Get and verify IP
+		getVerifyIP(GUISpace);
 		
-		// Get IP to connect to host
-		System.out.print("Please enter the room's IP address (or localhost to play locally): ");
-		String ip = input.nextLine();
-		
-		System.out.print("Please enter your username: ");
-		String username = input.nextLine();
-		
-		// Create spaces
-	    RemoteSpace chat = new RemoteSpace("tcp://" + ip + ":9001/chat?keep");
-	    RemoteSpace ping = new RemoteSpace("tcp://" + ip + ":9001/ping?keep");
-	    RemoteSpace spectators = new RemoteSpace("tcp://" + ip + ":9001/spectators?keep");
-	    RemoteSpace playing = new RemoteSpace("tcp://" + ip + ":9001/playing?keep");
-	    Space active = new SequentialSpace(1);
-	    
-	    // Add tokens to spaces
+		Space active = new SequentialSpace(1);
+
+		// Get and verify username
+		String username = getVerifyUsername(GUISpace, chat);
+
+        new Thread(new GameGUI(GUISpace, username)).start();
+
+        // Add tokens to spaces
 	    active.put("active");
-	    chat.put(username);
 	    spectators.put("Joined", username);
 		spectators.put("Ready", username);
-		 
 
         // Starting threads and add listener to spectators
-        new Thread(new ChatListener(chat, username)).start();
+        new Thread(new ServerListener(serverInfo, GUISpace,username)).start();
         new Thread(new Pong(ping, active, username)).start();
         SpectatorsListener listener = new SpectatorsListener(spectators, username);
         new Thread(listener).start();
-        new Thread(new GameListener(playing, spectators, username, listener)).start();
+        GameListener gameListener = new GameListener(playing, spectators, GUISpace, username, listener);
+        new Thread(gameListener).start();
 
-        System.out.println("Say something...");
+        System.out.println("Everything is running");
 
         // Client game logic
         while(true) {
-            String message = input.nextLine();
-            if (message.startsWith("say: ")) {
-                chat.put(username, message.substring(5));
-            } else if (message.startsWith("play: ") && listener.isInGame()) {
-                playing.put(username, new RPS(message.split(" ")[1]));
+        	Object[] tuple = GUISpace.get(new ActualField("ToClient"), new FormalField(String.class), new FormalField(Object.class));
+        	switch ((String)tuple[1]) {
+        		case "Move":
+        			System.out.println("Trying to play: " + ((String[])tuple[2])[0] + " hasPlayed: " + gameListener.getPlayed() + " inGame: " + listener.isInGame());
+        			if (!gameListener.getPlayed() && listener.isInGame()) {
+						System.out.println("Sent choice " + ((String[])tuple[2])[0]);
+        				playing.put(username, new RPS(((String[])tuple[2])[0]));
+        				gameListener.setPlayed(true);
+					}
+        			break;
+        		case "Send message":
+        			chat.put(username, tuple[2]);
+        			break;
+        		case "Exit":
+        			System.out.println("Trying to get token");
+        			active.get(new ActualField("active"));
+        			System.out.println("Client is exiting....");
+        			break;
+        	}
+        }
+     }
+    // Method verifies input IP
+    private static void getVerifyIP(Space GUISpace) throws InterruptedException {
+        while (true) {
+            String ip = (String)GUISpace.get(new ActualField("IP"), new FormalField(String.class))[1];
+            // Connect to spaces
+			try {
+                chat = new RemoteSpace("tcp://" + ip + ":9001/chat?keep");
+			    ping = new RemoteSpace("tcp://" + ip + ":9001/ping?keep");
+			    spectators = new RemoteSpace("tcp://" + ip + ":9001/spectators?keep");
+			    playing = new RemoteSpace("tcp://" + ip + ":9001/playing?keep");
+			    serverInfo = new RemoteSpace("tcp://" + ip + ":9001/serverInfo?keep");
+			    break;
+			} catch (IOException e) {
+        		GUISpace.put("IP Response", "Fail");
             }
         }
+        GUISpace.put("IP Response", "Ok");
     }
+    // Method verifies input username
+    private static String getVerifyUsername(Space GUISpace, Space chat) throws InterruptedException {
+        // Get inputted username and repeat if verification fails
+        String username;
+	    while (true) {
+            username = (String)GUISpace.get(new ActualField("Username"), new FormalField(String.class))[1];
+            // Put username in chat space to be verified
+            System.out.println("Trying to login with " + username);
+	    	chat.put(username, "login", "filler");
+	    	// Try again if the verification fails
+	    	String res = (String)chat.get(new ActualField(username), new ActualField("response"), new FormalField(String.class))[2];
+	    	if (res.equals("valid")) {
+                break;
+            }
+            GUISpace.put("Name Response", "Fail");
+        }
+		GUISpace.put("Name Response", "Ok");
+    	return username;
+    }
+
 }
